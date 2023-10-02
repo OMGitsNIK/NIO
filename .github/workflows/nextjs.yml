@@ -34,7 +34,6 @@ jobs:
       - name: Detect package manager
         id: detect-package-manager
         run: |
-          cd spongeexplorer
           if [ -f "${{ github.workspace }}/yarn.lock" ]; then
             echo "manager=yarn" >> $GITHUB_OUTPUT
             echo "command=install" >> $GITHUB_OUTPUT
@@ -46,10 +45,9 @@ jobs:
             echo "runner=npx --no-install" >> $GITHUB_OUTPUT
             exit 0
           else
-            echo "manager=npm" >> $GITHUB_OUTPUT
-            echo "command=ci" >> $GITHUB_OUTPUT
-            echo "runner=npx --no-install" >> $GITHUB_OUTPUT
-            exit 0
+            echo "no package manager found" 
+            exit 1
+          working-directory: spongeexplorer
           fi
       - name: Setup Node
         uses: actions/setup-node@v3
