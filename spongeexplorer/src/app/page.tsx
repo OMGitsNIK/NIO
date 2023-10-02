@@ -39,16 +39,18 @@ export default function Home() {
 
       </div>
 
-      <div className='bg-[#FFB800] w-full flex flex-col-reverse lg:flex-row'>
-        <div className='text-black p-8'>
-          <h1 className={`${PlayfairDisplay.className} text-5xl mb-4 font-black`}>Did You Know ?</h1>
-          <p className={`${SpaceGrotesk.className} flex-grow text-lg`}>Sponges, the aquatic animals, are some of the simplest multicellular organisms on Earth? They belong to the phylum Porifera and are known for their ability to filter tiny particles from the water through their porous bodies. Some sponges have been found to be over 500 million years old, making them one of the earliest forms of animal life on our planet. It`s fascinating how such simple creatures have been around for so long!</p>
-        </div>
-        <Image src="/Sponges/tube.png"
-          height={450}
-          width={450}
-          className='aspect-square object-cover w-full'
-          alt="Picture of the author" />
+   
+    <div className='bg-[#FFB800] w-full flex flex-col-reverse lg:flex-row'>
+      <div className='text-black p-8'>
+<h1 className={`${PlayfairDisplay.className} text-5xl mb-4 font-black`}>Did You Know ?</h1>
+      <p className={`${SpaceGrotesk.className} flex-grow text-lg`}>Sponges, the aquatic animals, are some of the simplest multicellular organisms on Earth? They belong to the phylum Porifera and are known for their ability to filter tiny particles from the water through their porous bodies. Some sponges have been found to be over 500 million years old, making them one of the earliest forms of animal life on our planet. It`s fascinating how such simple creatures have been around for so long!</p>
+      </div>
+<Image src="/Sponges/tube.png"
+     height={450}
+     width={450}
+     className='aspect-square object-cover w-full'
+      alt="Picture of the author"/>  
+
       </div>
 
 
