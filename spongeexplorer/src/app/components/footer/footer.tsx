@@ -1,5 +1,5 @@
 'use client'
-
+import Link from 'next/link'
 
 import {Playfair_Display,Space_Grotesk} from 'next/font/google'
 
@@ -23,8 +23,8 @@ export default function Footer() {
         <hr className='w-[100%] border-white/70' />
         <div className='flex w-full justify-between p-2'>
           <ul className={`${SpaceGrotesk.className} flex flex-col gap-0.5`}>
-            <li>About Us</li>
-            <li>NIO Website</li>
+            <li><Link href={'/About'}>About Us</Link></li>
+            <li><a href='https://www.nio.res.in/'>CSIR-NIO</a> </li>
             {/* <li>Link 3</li> */}
         </ul>
         <ul className='flex'>
