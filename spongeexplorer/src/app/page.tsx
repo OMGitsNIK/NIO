@@ -1,6 +1,6 @@
 import { Playfair_Display, Space_Grotesk } from 'next/font/google'
 import Image from 'next/image'
-import Footer from './components/footer/footer'
+import Footer from './components/footer'
 
 const PlayfairDisplay = Playfair_Display({
   preload: false,
