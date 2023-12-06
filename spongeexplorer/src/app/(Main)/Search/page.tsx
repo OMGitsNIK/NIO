@@ -1,10 +1,10 @@
 "use client";
 import { Playfair_Display, JetBrains_Mono, Space_Grotesk } from "next/font/google";
 import "material-icons/iconfont/material-icons.css";
-import { MaterialSymbolsSearchRounded } from "../components/icons";
+import { MaterialSymbolsSearchRounded } from "@/components/icons";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { SearchBar } from "../components/Search";
+import { SearchBar } from "@/components/Search";
 
 // const DM_Serif=DM_Serif_Display({
 //   weight: '400',
@@ -16,7 +16,7 @@ import { SearchBar } from "../components/Search";
 //   preload:false
 // })
 
-const JetBrainsMono = JetBrains_Mono({
+const jetBrainsMono = JetBrains_Mono({
   preload: false,
   style: ["italic", "normal"],
 });
@@ -24,7 +24,7 @@ const SpaceGrotesk = Space_Grotesk({
   preload: false,
   style: [ "normal"],
 });
-const PlayFair = Playfair_Display({
+const playFair = Playfair_Display({
   weight: "800",
   preload: false,
   style: "italic",
@@ -62,19 +62,12 @@ export default function Home() {
     <div className="w-screen grid place-items-center mt-9">
       <div className="md:w-[550px] w-[80%] flex flex-col items-center ">
         <h1
-          className={`${PlayFair.className} italic font-black text-5xl text-[#FFB800]`}
+          className={`${playFair.className} italic font-black text-5xl text-[#FFB800]`}
         >
           Search
         </h1>
         <SearchBar className='w-[34rem]'/>
-        <div className={`${JetBrainsMono.className} w-full mt-2 `}>
-          <h4 className="font-medium">Suggested</h4>
-          <ul className="font-thin italic text-sm opacity-60">
-            <li>Blue Sponge</li>
-            <li>Yellow Sponge</li>
-            <li>Green Sponge</li>
-          </ul>
-        </div>
+        
         <svg
           width="600"
           height="600"
