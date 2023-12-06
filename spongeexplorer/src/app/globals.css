@@ -16,4 +16,13 @@
   }
 }
 
+.smallScrollBar::-webkit-scrollbar{
+  width: 6px;
 
+}
+.smallScrollBar::-webkit-scrollbar-thumb{
+  background: #444;
+  border-radius: 10px;
+  width: 4px;
+
+}
