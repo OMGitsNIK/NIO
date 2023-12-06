@@ -30,14 +30,15 @@ export default function Page(){
     });
   };
   return (
-    <main className="grid grid-cols-2 h-screen overflow-hidden">
-      <Image
+    <main className="grid grid-cols-1 h-screen overflow-hidden">
+     {/** <Image
         src={"/Sponges/tube.png"}
         className="h-full object-cover w-full  "
         alt=""
         height={600}
         width={600}
       />
+  */}
 
       <div className="text-black flex flex-col gap-2 items-center justify-center w-full h-full ">
         <div className="flex flex-col w-72 gap-1">
