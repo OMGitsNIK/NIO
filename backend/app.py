@@ -117,26 +117,17 @@ TD_DICT = {item['Name']: item for item in TEMP_DATABASE}
 
 
 
-# @app.route('/Search')
-# def Search():
-#     query = request.args.get('q')
-#     matches = difflib.get_close_matches(query, TD_SEPARATED,12,.3)
-#     result = [TD_DICT[match] for match in matches]
-#     return result
 @app.route('/Search')
 def Search():
     query = request.args.get('q')
     print(query)
     result = []
-
-    # Iterate over all items in the database
     for item in TEMP_DATABASE:
-        # Iterate over all attributes of the item
-        for attribute in item.values():
-            # If the query matches the attribute
-            if query.lower() in str(attribute).lower():
-                # Add the item to the result and break the inner loop
-                result.append(item)
+        for attribute in item:
+            attr=f"{attribute} : {item[attribute]}"
+     
+            if query.lower() in str(attr).lower().replace(" ",""):
+                result.append({"value":item,"ClosestAttribute":attr})
                 break
 
     return result

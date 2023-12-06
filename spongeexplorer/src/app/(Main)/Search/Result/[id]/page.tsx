@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Noto_Sans, Space_Grotesk } from "next/font/google";
-import { SearchBar } from "@/app/components/Search";
+import { SearchBar } from "@/components/Search";
 import { useEffect, useState } from "react";
 
 const NotoSans = Noto_Sans({ subsets: ["latin"], weight: ["900"] });
