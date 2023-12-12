@@ -16,13 +16,11 @@
   }
 }
 
-.smallScrollBar::-webkit-scrollbar{
+.smallScrollBar::-webkit-scrollbar {
   width: 0px;
-
 }
-.smallScrollBar::-webkit-scrollbar-thumb{
+.smallScrollBar::-webkit-scrollbar-thumb {
   background: #444;
   border-radius: 10px;
   width: 4px;
-
 }

@@ -33,8 +33,8 @@ export const options: NextAuthOptions = {
       },
     }),
   ],
-  pages:{
-signIn:'../../signin',
-signOut:'../../signout'
-  }
+  pages: {
+    signIn: "../../signin",
+    signOut: "../../signout",
+  },
 };

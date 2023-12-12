@@ -1,9 +1,9 @@
 "use client";
-import { Playfair_Display, JetBrains_Mono, Space_Grotesk } from "next/font/google";
-import "material-icons/iconfont/material-icons.css";
-import { MaterialSymbolsSearchRounded } from "@/components/icons";
+import { Playfair_Display } from "next/font/google";
+// import "material-icons/iconfont/material-icons.css";
+// import { MaterialSymbolsSearchRounded } from "@/components/icons";
 import { useEffect, useState } from "react";
-import Link from "next/link";
+// import Link from "next/link";
 import { SearchBar } from "@/components/Search";
 
 // const DM_Serif=DM_Serif_Display({
@@ -16,14 +16,6 @@ import { SearchBar } from "@/components/Search";
 //   preload:false
 // })
 
-const jetBrainsMono = JetBrains_Mono({
-  preload: false,
-  style: ["italic", "normal"],
-});
-const SpaceGrotesk = Space_Grotesk({
-  preload: false,
-  style: [ "normal"],
-});
 const playFair = Playfair_Display({
   weight: "800",
   preload: false,
@@ -43,7 +35,6 @@ export default function Home() {
   useEffect(() => {
     if (query.replaceAll(" ", "") == "") {
       setResults([]);
-
     } else {
       setShowResults(false);
       fetch(`http://127.0.0.1:5000/Search?q=${query}`, {
@@ -54,20 +45,14 @@ export default function Home() {
         .then((result) => setResults(JSON.parse(result)))
         .catch((error) => console.log("error", error));
     }
-    results.length==0?setShowResults(true):setShowResults(false);
-
-    
+    results.length == 0 ? setShowResults(true) : setShowResults(false);
   }, [getSearch, query, results.length]);
   return (
     <div className="w-screen grid place-items-center mt-9">
       <div className="md:w-[550px] w-[80%] flex flex-col items-center ">
-        <h1
-          className={`${playFair.className} italic font-black text-5xl text-[#FFB800]`}
-        >
-          Search
-        </h1>
-        <SearchBar className='w-[34rem]'/>
-        
+        <h1 className={`italic font-black text-5xl text-[#FFB800]`}>Search</h1>
+        <SearchBar className="w-[34rem]" />
+
         <svg
           width="600"
           height="600"

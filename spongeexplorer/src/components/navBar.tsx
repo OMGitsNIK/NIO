@@ -20,6 +20,12 @@ export default function NavBar() {
           Home
         </Link>
         <Link
+          href="/Tools"
+          className={pathname == "/Tools" ? "text-[#9672FF]" : ""}
+        >
+          Tools
+        </Link>
+        <Link
           href="/Search"
           className={pathname == "/Search" ? "text-[#9672FF]" : ""}
         >

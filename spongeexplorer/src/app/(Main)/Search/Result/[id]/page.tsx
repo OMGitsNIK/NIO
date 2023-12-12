@@ -8,13 +8,16 @@ const NotoSans = Noto_Sans({ subsets: ["latin"], weight: ["900"] });
 const SpaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 export default function Page({ params }: { params: { id: string } }) {
   interface SpongeDetails {
-    Color?: string;
-    Depth?: string;
-    Distribution?: string;
-    Habitat?: string;
-    Name?: string;
-    Size?: string;
-    Type?: string;
+    ClosestAttribute: string;
+    value: {
+      Color?: string;
+      Depth?: string;
+      Distribution?: string;
+      Habitat?: string;
+      Name?: string;
+      Size?: string;
+      Type?: string;
+    };
   }
   const [spongeDetails, setSpongeDetails] = useState<SpongeDetails>({});
   useEffect(() => {
@@ -23,10 +26,15 @@ export default function Page({ params }: { params: { id: string } }) {
       redirect: "follow",
     })
       .then((response) => response.json())
-      .then((result) => setSpongeDetails(result[0]))
+      .then((result) => {
+        setSpongeDetails(result[0]);
+      })
       .catch((error) => console.log("error", error));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (Object.keys(spongeDetails).length == 0)
+    return <div>ADD SOME LOADING SKELETON</div>;
   return (
     <main className="p-8">
       <svg
@@ -70,13 +78,12 @@ export default function Page({ params }: { params: { id: string } }) {
           alt={""}
         />
         <div>
-
           <h1 className={`text-3xl font-black ${NotoSans.className}`}>
-            {spongeDetails.Name}
+            {spongeDetails.value.Name}
           </h1>
           <h2 className={`text-lg font-black ${NotoSans.className}`}>
             {" "}
-            {spongeDetails.Type}
+            {spongeDetails.value.Type}
           </h2>
           <p className={`${SpaceGrotesk.className} text-sm font-thin w-96`}>
             &quot;The Great Yellow Sea Sponge&quot; is a remarkable marine
