@@ -169,7 +169,7 @@ def processImage():
 
         # {'name': 'equalize_adapthist', 'iterations': 1},
         # {'name': 'gaussian', 'strength': 1, 'iterations': 200},
-        {'name': 'equalize_adapthist', 'iterations': 100},
+        {'name': 'equalize_adapthist', 'iterations': 1},
 
     ]
     x = img
@@ -184,6 +184,7 @@ def processImage():
                 x = filters.gaussian(x, filter['strength'])
             if (filter['name'] == 'sobel'):
                 x = filters.sobel(x)
+            print(f'{filter} - {iteration}')
 
     x = np.array(x)
     im = Image.fromarray((x * 255).astype(np.uint8))
@@ -199,4 +200,4 @@ def ViewUploads(filename):
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run()
