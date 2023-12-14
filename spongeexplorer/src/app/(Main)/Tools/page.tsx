@@ -97,10 +97,15 @@ function Calculation(props: any) {
   const [isOpen, setCalcOpen] = useState(false);
   const [calculatorState, setCalculatorActive] = useState(true);
   return (
-    <div className="p-1 bg-zinc-900 w-[22rem] border-[1px] border-white/10 active:border-blue-400/60 rounded-md  select-none">
-      <div className="flex items-center w-full justify-center relative">
+    <button
+      className={`p-1 bg-zinc-900 w-[22rem] border-[1px] border-white/10 ${
+        props.isActive ? "border-blue-400/60" : ""
+      } rounded-md  select-none`}
+      onClick={props.onClick}
+    >
+      <div className="grid grid-flow-col items-center w-full  relative  ">
         <button
-          className="hover:bg-slate-600/10 rounded-full p-1 transition"
+          className="hover:bg-slate-600/10  rounded-full p-1 transition justify-self-start"
           onClick={() => setCalcOpen(!isOpen)}
         >
           {isOpen ? (
@@ -109,29 +114,32 @@ function Calculation(props: any) {
             <MaterialSymbolsChevronRightRounded />
           )}
         </button>
-        <span className="w-5 h-auto aspect-square items-center flex  text-sm font-thin text-orange-400 justify-center ">
-          <GravityUiChartAreaStackedNormalized />
-        </span>
-        <input
-          className="w-40 bg-zinc-950 p-0.5 px-1  rounded font-thin ml-2 text-sm "
-          type="text"
-          value={props.name}
-        />
-        {/* <span className="w-40 bg-zinc-950 p-0.5 px-1  rounded font-thin ml-2 text-sm "></span> */}
-        <button
-          onClick={() => setCalculatorActive(!calculatorState)}
-          className="hover:bg-slate-600/10 rounded-full p-1 transition"
-        >
-          {calculatorState ? <MdiEyeOutline /> : <MdiEyeClosed />}
-        </button>
-        <button className="  rounded-full p-0.5">
-          <MaterialSymbolsCloseRounded />
-        </button>
+        <div className="flex items-center justify-center">
+          <span className="w-5 h-auto aspect-square items-center flex text-sm font-thin text-orange-400 justify-center ">
+            <GravityUiChartAreaStackedNormalized />
+          </span>
+          <input
+            className="w-40 bg-zinc-950 p-0.5 px-1  rounded font-thin ml-2 text-sm "
+            type="text"
+            value={props.name}
+          />
+        </div>
+        <div className="flex items-center">
+          <button
+            onClick={() => setCalculatorActive(!calculatorState)}
+            className="hover:bg-slate-600/10 rounded-full p-1 transition"
+          >
+            {calculatorState ? <MdiEyeOutline /> : <MdiEyeClosed />}
+          </button>
+          <button className="  rounded-full p-0.5">
+            <MaterialSymbolsCloseRounded />
+          </button>
 
-        <TeenyiconsDragHorizontalOutline className="justify-self-end" />
+          <TeenyiconsDragHorizontalOutline className=" cursor-grab active:cursor-grabbing rounded-full p-0.5" />
+        </div>
       </div>
       <div className={`${isOpen ? "h-32" : "h-0"}`}></div>
-    </div>
+    </button>
   );
 }
 function AddCalculatorDropdown() {
@@ -146,6 +154,7 @@ function AddCalculator() {
   );
 }
 function SidePanel(props: any) {
+  const [ActiveCalc, setActiveCalc] = useState(0);
   return (
     <div
       className={`${props.className} absolute right-0 top-0 h-[calc(100vh-5rem)] w-96 bg-zinc-950  border-l-[1px]  border-white/10 p-4 overflow-y-scroll smallScrollBar`}
@@ -155,10 +164,26 @@ function SidePanel(props: any) {
         <AddCalculator />
       </div>
       <div className="gap-1 grid">
-        <Calculation name="HE Normalization" />
-        <Calculation name="Blur" />
-        <Calculation name="Equalize" />
-        <Calculation name="BW-RGB" />
+        <Calculation
+          onClick={() => setActiveCalc(1)}
+          isActive={ActiveCalc == 1}
+          name="HE Normalization"
+        />
+        <Calculation
+          onClick={() => setActiveCalc(2)}
+          isActive={ActiveCalc == 2}
+          name="Blur"
+        />
+        <Calculation
+          onClick={() => setActiveCalc(3)}
+          isActive={ActiveCalc == 3}
+          name="Equalize"
+        />
+        <Calculation
+          onClick={() => setActiveCalc(4)}
+          isActive={ActiveCalc == 4}
+          name="BW-RGB"
+        />
       </div>
     </div>
   );

@@ -163,7 +163,7 @@ def processImage():
 
     StackedFilers = [
 
-        # {'name': 'sobel', 'iterations': 1},
+        {'name': 'sobel', 'iterations': 4},
 
 
 

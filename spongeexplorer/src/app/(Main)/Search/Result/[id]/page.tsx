@@ -10,16 +10,27 @@ export default function Page({ params }: { params: { id: string } }) {
   interface SpongeDetails {
     ClosestAttribute: string;
     value: {
-      Color?: string;
-      Depth?: string;
-      Distribution?: string;
-      Habitat?: string;
-      Name?: string;
-      Size?: string;
-      Type?: string;
+      Color: string;
+      Depth: string;
+      Distribution: string;
+      Habitat: string;
+      Name: string;
+      Size: string;
+      Type: string;
     };
   }
-  const [spongeDetails, setSpongeDetails] = useState<SpongeDetails>({});
+  const [spongeDetails, setSpongeDetails] = useState<SpongeDetails>({
+    ClosestAttribute: "",
+    value: {
+      Color: "",
+      Depth: "",
+      Distribution: "",
+      Habitat: "",
+      Name: "",
+      Size: "",
+      Type: "",
+    },
+  });
   useEffect(() => {
     fetch(`http://127.0.0.1:5000/Search?q=${decodeURI(params.id)}`, {
       method: "get",
