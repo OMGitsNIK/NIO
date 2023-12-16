@@ -1,4 +1,5 @@
 "use client";
+import { AddCalculator, Calculation } from "@/components/calculators";
 import {
   GravityUiChartAreaStackedNormalized,
   MaterialSymbolsAdd,
@@ -10,7 +11,7 @@ import {
   TeenyiconsDragHorizontalOutline,
 } from "@/components/icons";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 interface ImageData {
   name: string; // Name of the image processing step
@@ -92,98 +93,36 @@ export default function Page() {
     </main>
   );
 }
+interface CalcStackInterface {
+  name: string
+}
 
-function Calculation(props: any) {
-  const [isOpen, setCalcOpen] = useState(false);
-  const [calculatorState, setCalculatorActive] = useState(true);
-  return (
-    <button
-      className={`p-1 bg-zinc-900 w-[22rem] border-[1px] border-white/10 ${
-        props.isActive ? "border-blue-400/60" : ""
-      } rounded-md  select-none`}
-      onClick={props.onClick}
-    >
-      <div className="grid grid-flow-col items-center w-full  relative  ">
-        <button
-          className="hover:bg-slate-600/10  rounded-full p-1 transition justify-self-start"
-          onClick={() => setCalcOpen(!isOpen)}
-        >
-          {isOpen ? (
-            <MaterialSymbolsKeyboardArrowDownRounded />
-          ) : (
-            <MaterialSymbolsChevronRightRounded />
-          )}
-        </button>
-        <div className="flex items-center justify-center">
-          <span className="w-5 h-auto aspect-square items-center flex text-sm font-thin text-orange-400 justify-center ">
-            <GravityUiChartAreaStackedNormalized />
-          </span>
-          <input
-            className="w-40 bg-zinc-950 p-0.5 px-1  rounded font-thin ml-2 text-sm "
-            type="text"
-            value={props.name}
-          />
-        </div>
-        <div className="flex items-center">
-          <button
-            onClick={() => setCalculatorActive(!calculatorState)}
-            className="hover:bg-slate-600/10 rounded-full p-1 transition"
-          >
-            {calculatorState ? <MdiEyeOutline /> : <MdiEyeClosed />}
-          </button>
-          <button className="  rounded-full p-0.5">
-            <MaterialSymbolsCloseRounded />
-          </button>
-
-          <TeenyiconsDragHorizontalOutline className=" cursor-grab active:cursor-grabbing rounded-full p-0.5" />
-        </div>
-      </div>
-      <div className={`${isOpen ? "h-32" : "h-0"}`}></div>
-    </button>
-  );
-}
-function AddCalculatorDropdown() {
-  return <div></div>;
-}
-function AddCalculator() {
-  return (
-    <div className="p-1 w-[22rem] h-8 mb-3 bg-zinc-900 border-[1px] border-white/10 rounded-md  select-none flex items-center">
-      <MaterialSymbolsAdd />
-      <h1 className="text-sm">Add Calculator</h1>
-    </div>
-  );
-}
+const CalcList = [{ name: 'Histogram Equalization' }, { name: 'Blur' }, { name: 'Sobel' }]
 function SidePanel(props: any) {
+  const [CalcStack, setCalcStack] = useState<CalcStackInterface[]>(CalcList);
   const [ActiveCalc, setActiveCalc] = useState(0);
+
+  // Move handleDeleteItem function outside useEffect
+  const handleDeleteItem = (index: number) => {
+    setCalcStack((prevStack) => prevStack.filter((item, i) => i !== index));
+  };
+
   return (
-    <div
-      className={`${props.className} absolute right-0 top-0 h-[calc(100vh-5rem)] w-96 bg-zinc-950  border-l-[1px]  border-white/10 p-4 overflow-y-scroll smallScrollBar`}
-    >
+    <div className={`${props.className} absolute right-0 top-0 h-[calc(100vh-5rem)] w-96 bg-zinc-950  border-l-[1px]  border-white/10 p-4 overflow-y-scroll smallScrollBar`}>
       <h1 className="text-xl pb-2">Calculation Stack</h1>
       <div className="gap-1 grid">
-        <AddCalculator />
+        <AddCalculator onAdd={()=>setCalcStack((prevStack) => [...prevStack, { name: 'New Calculator' }])}/>
       </div>
       <div className="gap-1 grid">
-        <Calculation
-          onClick={() => setActiveCalc(1)}
-          isActive={ActiveCalc == 1}
-          name="HE Normalization"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(2)}
-          isActive={ActiveCalc == 2}
-          name="Blur"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(3)}
-          isActive={ActiveCalc == 3}
-          name="Equalize"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(4)}
-          isActive={ActiveCalc == 4}
-          name="BW-RGB"
-        />
+        {CalcStack.map((i, index) => (
+          <Calculation
+            key={index}
+            onDelete={() => handleDeleteItem(index)}
+            onClick={() => setActiveCalc(index)}
+            isActive={ActiveCalc === index}
+            name={i.name}
+          />
+        ))}
       </div>
     </div>
   );
