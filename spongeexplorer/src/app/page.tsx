@@ -37,7 +37,15 @@ export default function Home() {
             />
           </g>
           <defs>
-            {/* Your existing defs here */}
+            {/* <filter id="filter0_f_3_47" x="0" y="0" width="1000" height="1968.95" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+<feFlood flood-opacity="0" result="BackgroundImageFix"/>
+<feBlend mode="normal" in="SourceGraphic" in2="BackgroundImageFix" result="shape"/>
+<feGaussianBlur stdDeviation="283" result="effect1_foregroundBlur_3_47"/>
+</filter> */}
+            <linearGradient id="paint0_linear_3_47" x1="1306.55" y1="167.807" x2="779.108" y2="1228.06" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#FCFF80" />
+              <stop offset="1" stop-color="#FFB800" />
+            </linearGradient>
           </defs>
         </svg>
       </div>
