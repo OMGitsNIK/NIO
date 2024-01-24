@@ -1,17 +1,9 @@
 "use client";
-import {
-  GravityUiChartAreaStackedNormalized,
-  MaterialSymbolsAdd,
-  MaterialSymbolsChevronRightRounded,
-  MaterialSymbolsCloseRounded,
-  MaterialSymbolsKeyboardArrowDownRounded,
-  MdiEyeClosed,
-  MdiEyeOutline,
-  TeenyiconsDragHorizontalOutline,
-} from "@/components/icons";
+import { MaterialSymbolsAdd } from "@/components/icons";
 import Image from "next/image";
-import { useState } from "react";
-
+import { Key, useState } from "react";
+import { Reorder } from "framer-motion";
+import { Calculation } from "@/components/Calculator";
 interface ImageData {
   name: string; // Name of the image processing step
   image_url: string; // URL to the processed image
@@ -93,67 +85,27 @@ export default function Page() {
   );
 }
 
-function Calculation(props: any) {
-  const [isOpen, setCalcOpen] = useState(false);
-  const [calculatorState, setCalculatorActive] = useState(true);
-  return (
-    <button
-      className={`p-1 bg-zinc-900 w-[22rem] border-[1px] border-white/10 ${
-        props.isActive ? "border-blue-400/60" : ""
-      } rounded-md  select-none`}
-      onClick={props.onClick}
-    >
-      <div className="grid grid-flow-col items-center w-full  relative  ">
-        <button
-          className="hover:bg-slate-600/10  rounded-full p-1 transition justify-self-start"
-          onClick={() => setCalcOpen(!isOpen)}
-        >
-          {isOpen ? (
-            <MaterialSymbolsKeyboardArrowDownRounded />
-          ) : (
-            <MaterialSymbolsChevronRightRounded />
-          )}
-        </button>
-        <div className="flex items-center justify-center">
-          <span className="w-5 h-auto aspect-square items-center flex text-sm font-thin text-orange-400 justify-center ">
-            <GravityUiChartAreaStackedNormalized />
-          </span>
-          <input
-            className="w-40 bg-zinc-950 p-0.5 px-1  rounded font-thin ml-2 text-sm "
-            type="text"
-            value={props.name}
-          />
-        </div>
-        <div className="flex items-center">
-          <button
-            onClick={() => setCalculatorActive(!calculatorState)}
-            className="hover:bg-slate-600/10 rounded-full p-1 transition"
-          >
-            {calculatorState ? <MdiEyeOutline /> : <MdiEyeClosed />}
-          </button>
-          <button className="  rounded-full p-0.5">
-            <MaterialSymbolsCloseRounded />
-          </button>
-
-          <TeenyiconsDragHorizontalOutline className=" cursor-grab active:cursor-grabbing rounded-full p-0.5" />
-        </div>
-      </div>
-      <div className={`${isOpen ? "h-32" : "h-0"}`}></div>
-    </button>
-  );
-}
 function AddCalculatorDropdown() {
   return <div></div>;
 }
-function AddCalculator() {
+function AddCalculator({ onClick }: { onClick: React.MouseEventHandler }) {
   return (
-    <div className="p-1 w-[22rem] h-8 mb-3 bg-zinc-900 border-[1px] border-white/10 rounded-md  select-none flex items-center">
+    <div
+      onClick={onClick}
+      className="p-1 w-[22rem] h-8 mb-3 bg-zinc-900 border-[1px] hover:bg-zinc-800 border-white/10 rounded-md  select-none flex items-center"
+    >
       <MaterialSymbolsAdd />
       <h1 className="text-sm">Add Calculator</h1>
     </div>
   );
 }
 function SidePanel(props: any) {
+  const [items, setItems] = useState([
+    { id: 0, name: "HE Normalization" },
+    { id: 1, name: "Resize" },
+    { id: 2, name: "Denoise" },
+    { id: 3, name: "Upscale" },
+  ]);
   const [ActiveCalc, setActiveCalc] = useState(0);
   return (
     <div
@@ -161,30 +113,66 @@ function SidePanel(props: any) {
     >
       <h1 className="text-xl pb-2">Calculation Stack</h1>
       <div className="gap-1 grid">
-        <AddCalculator />
+        <AddCalculator
+          onClick={() => {
+            setItems((prev) => {
+              return [
+                ...prev,
+                {
+                  id:
+                    prev.length > 0
+                      ? Math.max(...prev.map((i) => i.id)) + 1
+                      : 0,
+                  name: "Upscale",
+                },
+              ];
+            });
+          }}
+        />
       </div>
       <div className="gap-1 grid">
-        <Calculation
-          onClick={() => setActiveCalc(1)}
-          isActive={ActiveCalc == 1}
-          name="HE Normalization"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(2)}
-          isActive={ActiveCalc == 2}
-          name="Blur"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(3)}
-          isActive={ActiveCalc == 3}
-          name="Equalize"
-        />
-        <Calculation
-          onClick={() => setActiveCalc(4)}
-          isActive={ActiveCalc == 4}
-          name="BW-RGB"
+        <Calculators
+          items={items}
+          setItems={setItems}
+          ActiveCalc={ActiveCalc}
+          setActiveCalc={setActiveCalc}
         />
       </div>
     </div>
+  );
+}
+
+function Calculators({
+  items,
+  setItems,
+  ActiveCalc,
+  setActiveCalc,
+}: {
+  setItems: any;
+  items: Array<{ id: number; name: string }>;
+  ActiveCalc: number;
+  setActiveCalc: any;
+}) {
+  return (
+    <>
+      <Reorder.Group as="div" axis="y" values={items} onReorder={setItems}>
+        {items.map((item: { id: Key | null | undefined; name: string }) => (
+          <Calculation
+            key={item.id}
+            item={item}
+            onDeleteCalculator={() => {
+              setItems(
+                (prev: Array<{ id: Key | null | undefined; name: string }>) => {
+                  return prev.filter((i) => i.id !== item.id);
+                }
+              );
+            }}
+            onClick={() => setActiveCalc(item)}
+            isActive={ActiveCalc == 1}
+            name={item.name}
+          />
+        ))}
+      </Reorder.Group>
+    </>
   );
 }

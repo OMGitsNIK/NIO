@@ -19,7 +19,7 @@ export default function Custom404() {
         loop={true}
       />
       {/* <Image src={"/SpongeToon.png"} width={300} height={300} alt={"Alt"} /> */}
-      <h1 className={`${SpaceGrotesk.className} font-thin text-2xl`}>
+      <h1 className={`${SpaceGrotesk.className} font-thin md:text-2xl`}>
         Sorry The requested page could not be found.
       </h1>
     </div>
