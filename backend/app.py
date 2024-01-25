@@ -160,17 +160,11 @@ def processImage():
     img = np.array(img)
 
     # Processing Happens Here
-
     StackedFilers = [
-
-        {'name': 'sobel', 'iterations': 4},
-
-
-
+        {'name': 'sobel', 'iterations': 0},
         # {'name': 'equalize_adapthist', 'iterations': 1},
-        # {'name': 'gaussian', 'strength': 1, 'iterations': 200},
+        {'name': 'gaussian', 'strength': 1, 'iterations': 20},
         {'name': 'equalize_adapthist', 'iterations': 1},
-
     ]
     x = img
     for filter in StackedFilers:

@@ -1,9 +1,9 @@
 "use client";
+import { AddCalculator, Calculation } from "@/components/Calculator";
 import { MaterialSymbolsAdd } from "@/components/icons";
 import Image from "next/image";
 import { Key, useState } from "react";
 import { Reorder } from "framer-motion";
-import { Calculation } from "@/components/Calculator";
 interface ImageData {
   name: string; // Name of the image processing step
   image_url: string; // URL to the processed image
@@ -23,7 +23,7 @@ export default function Page() {
 
     const formData = new FormData();
     formData.append("image", imageFile);
-
+    
     try {
       const response = await fetch("http://127.0.0.1:5000/processImage", {
         method: "POST",
@@ -84,21 +84,18 @@ export default function Page() {
     </main>
   );
 }
+interface CalcStackInterface {
+  name: string;
+}
 
-function AddCalculatorDropdown() {
-  return <div></div>;
-}
-function AddCalculator({ onClick }: { onClick: React.MouseEventHandler }) {
-  return (
-    <div
-      onClick={onClick}
-      className="p-1 w-[22rem] h-8 mb-3 bg-zinc-900 border-[1px] hover:bg-zinc-800 border-white/10 rounded-md  select-none flex items-center"
-    >
-      <MaterialSymbolsAdd />
-      <h1 className="text-sm">Add Calculator</h1>
-    </div>
-  );
-}
+const CalcList = [
+  { name: "Histogram Equalization" },
+  { name: "Blur" },
+  { name: "Sobel" },
+];
+
+
+
 function SidePanel(props: any) {
   const [items, setItems] = useState([
     { id: 0, name: "HE Normalization" },
@@ -106,7 +103,14 @@ function SidePanel(props: any) {
     { id: 2, name: "Denoise" },
     { id: 3, name: "Upscale" },
   ]);
+  const [CalcStack, setCalcStack] = useState<CalcStackInterface[]>(CalcList);
   const [ActiveCalc, setActiveCalc] = useState(0);
+
+  // Move handleDeleteItem function outside useEffect
+  const handleDeleteItem = (index: number) => {
+    setCalcStack((prevStack) => prevStack.filter((item, i) => i !== index));
+  };
+
   return (
     <div
       className={`${props.className} absolute right-0 top-0 h-[calc(100vh-5rem)] w-96 bg-zinc-950  border-l-[1px]  border-white/10 p-4 overflow-y-scroll smallScrollBar`}
@@ -114,7 +118,7 @@ function SidePanel(props: any) {
       <h1 className="text-xl pb-2">Calculation Stack</h1>
       <div className="gap-1 grid">
         <AddCalculator
-          onClick={() => {
+          onAdd={() => {
             setItems((prev) => {
               return [
                 ...prev,
@@ -176,3 +180,5 @@ function Calculators({
     </>
   );
 }
+
+
