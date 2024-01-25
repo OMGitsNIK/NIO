@@ -14,18 +14,34 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <div className="mx-4 lg:mx-8 my-8 lg:my-16">
-        <h1 className={`${PlayfairDisplay.className} text-3xl lg:text-5xl text-[#FFB800] mb-4 font-black`}>
+        <h1
+          className={`${playfairDisplay.className} text-3xl lg:text-5xl text-[#FFB800] mb-4 font-black`}
+        >
           Sponge Explorer
         </h1>
-        <p className={`${SpaceGrotesk.className} w-full lg:w-[40rem] text-[.9em] font-light mb-8 lg:mb-0`}>
-          Sponges, often referred to as the simplest multicellular animals, are fascinating creatures in the world of marine biology. These aquatic organisms, while lacking complex organs and tissues, play a vital role in marine ecosystems. Sponges are filter feeders, constantly pumping water through their porous bodies, which allows them to efficiently capture tiny particles and nutrients. Their remarkable ability to filter large volumes of water makes them an essential component in maintaining water quality and nutrient cycling in oceans. Moreover, scientists are increasingly studying sponges for their potential in biotechnology, as they produce unique chemical compounds that have shown promise in pharmaceutical and medical applications. So, sponges not only contribute to the health of our oceans but also hold exciting potential for future scientific discoveries.
+        <p
+          className={`${spaceGrotesk.className} w-full lg:w-[40rem] text-[.9em] font-light mb-8 lg:mb-0`}
+        >
+          Sponges, often referred to as the simplest multicellular animals, are
+          fascinating creatures in the world of marine biology. These aquatic
+          organisms, while lacking complex organs and tissues, play a vital role
+          in marine ecosystems. Sponges are filter feeders, constantly pumping
+          water through their porous bodies, which allows them to efficiently
+          capture tiny particles and nutrients. Their remarkable ability to
+          filter large volumes of water makes them an essential component in
+          maintaining water quality and nutrient cycling in oceans. Moreover,
+          scientists are increasingly studying sponges for their potential in
+          biotechnology, as they produce unique chemical compounds that have
+          shown promise in pharmaceutical and medical applications. So, sponges
+          not only contribute to the health of our oceans but also hold exciting
+          potential for future scientific discoveries.
         </p>
 
+        {/* biome-ignore lint/a11y/noSvgWithoutTitle: No Clue why it wasn't working, if it works now remove the ignore  */}
         <svg
-        title="blob"
           width="400"
           height="400"
-          style={{ position: 'absolute', zIndex: -1, right: '35%', top: '50%', filter: 'blur(60px)', scale: 1.8 }}
+          className="absolute -z-10 right-[35%] top-[50%] blur-3xl scale-[1.8]"
           viewBox="700 300 500 1000"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
@@ -65,9 +81,19 @@ export default function Home() {
 
       <div className="bg-[#FFB800] w-full lg:flex lg:flex-row-reverse">
         <div className="text-black p-4 lg:p-8 flex-grow">
-          <h1 className={`${PlayfairDisplay.className} text-3xl lg:text-5xl mb-4 font-black`}>Did You Know ?</h1>
-          <p className={`${SpaceGrotesk.className} text-base lg:text-lg`}>
-            Sponges, the aquatic animals, are some of the simplest multicellular organisms on Earth? They belong to the phylum Porifera and are known for their ability to filter tiny particles from the water through their porous bodies. Some sponges have been found to be over 500 million years old, making them one of the earliest forms of animal life on our planet. It's fascinating how such simple creatures have been around for so long!
+          <h1
+            className={`${playfairDisplay.className} text-3xl lg:text-5xl mb-4 font-black`}
+          >
+            Did You Know ?
+          </h1>
+          <p className={`${spaceGrotesk.className} text-base lg:text-lg`}>
+            Sponges, the aquatic animals, are some of the simplest multicellular
+            organisms on Earth? They belong to the phylum Porifera and are known
+            for their ability to filter tiny particles from the water through
+            their porous bodies. Some sponges have been found to be over 500
+            million years old, making them one of the earliest forms of animal
+            life on our planet. It&apos;s fascinating how such simple creatures
+            have been around for so long!
           </p>
         </div>
 
@@ -76,7 +102,7 @@ export default function Home() {
             src="/Sponges/tube.png"
             height={450}
             width={450}
-            className="aspect-square object-cover w-full"
+            className="aspect-square object-cover h-full w-full "
             alt="Picture of the author"
           />
         </div>
@@ -84,6 +110,5 @@ export default function Home() {
 
       <Footer />
     </div>
-  );
   );
 }
