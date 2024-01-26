@@ -76,11 +76,8 @@ export function Calculation({
           >
             {calculatorState ? <MdiEyeOutline /> : <MdiEyeClosed />}
           </div>
-          <div
-            onClick={onDeleteCalculator}
-            onKeyDown={onDeleteCalculator}
-            className="  rounded-full p-0.5"
-          >
+          {/* biome-ignore lint/a11y/useKeyWithClickEvents: <explanation> */}
+          <div onClick={onDeleteCalculator} className="  rounded-full p-0.5">
             <MaterialSymbolsCloseRounded />
           </div>
 
@@ -97,9 +94,9 @@ export function Calculation({
 
 export function AddCalculator({ onAdd }: { onAdd: React.MouseEventHandler }) {
   return (
+    // biome-ignore lint/a11y/useKeyWithClickEvents: <explanation>
     <div
       onClick={onAdd}
-      onKeyDown={onAdd}
       className="p-1 w-[22rem] h-8 mb-3 bg-zinc-900 border-[1px] border-white/10 rounded-md  select-none flex items-center"
     >
       <MaterialSymbolsAdd />
