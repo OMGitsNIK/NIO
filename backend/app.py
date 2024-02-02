@@ -161,16 +161,21 @@ def processImage():
 
     # Processing Happens Here
     StackedFilers = [
-        {'name': 'sobel', 'iterations': 0},
+        # {'name': 'sobel', 'iterations': 2},
+        # {'name': 'equalize_hist', 'iterations': 1},
+        {'name': 'equalize_adapthist', 'iterations': 5},
+        # {'name': 'gaussian', 'strength': 1, 'iterations': 2},
         # {'name': 'equalize_adapthist', 'iterations': 1},
-        {'name': 'gaussian', 'strength': 1, 'iterations': 20},
-        {'name': 'equalize_adapthist', 'iterations': 1},
+        # {'name': 'resize', 'iterations': 1},
     ]
     x = img
     for filter in StackedFilers:
         for iteration in range(filter['iterations']):
             if (filter['name'] == 'equalize_adapthist'):
                 x = exposure.equalize_adapthist(x)
+            if (filter['name'] == 'equalize_hist'):
+                x = cv2.equalizeHist(x)
+                # x = exposure.equalize_adapthist(x)
             if (filter['name'] == 'gaussian'):
                 # print(x.shape)
                 # x = cv2.GaussianBlur(
@@ -178,6 +183,9 @@ def processImage():
                 x = filters.gaussian(x, filter['strength'])
             if (filter['name'] == 'sobel'):
                 x = filters.sobel(x)
+            if (filter['name'] == 'resize'):
+                x=cv2.bitwise_not(x)
+                x = cv2.resize(x,(500,500))
             print(f'{filter} - {iteration}')
 
     x = np.array(x)
@@ -194,4 +202,4 @@ def ViewUploads(filename):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
