@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from 'next/image'
 import { useEffect, useState } from "react";
 export default function Page() {
-const [results,setResults]=useState([''])
+const [results,setResults]=useState<string[]>([''])
 
 const [query,setQuery]=useState('')
 	useEffect(()=>{
@@ -19,13 +19,14 @@ const [query,setQuery]=useState('')
 				setResults(result);
 			})
 			.catch((error) => console.log("error", error));
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	},[query])
 	useEffect(()=>{console.log(results)},[results])
 	return (
 		<div className="h-full min-h-screen w-full bg-neutral-900 relative">
-			<section className="  h-full w-full px-8 sticky top-0 bg-neutral-900  border-b border-white/10 py-4 ">
-				<div className="w-2/3">
-					<SearchBar onChange={(e)=>setQuery(e.target.value)} className="h-12 " />
+			<section className="  z-50 h-full w-full px-8 sticky top-0 bg-neutral-900  border-b border-white/10 py-4 ">
+				<div className="w-2/3 ">
+					<SearchBar onChange={(e)=>setQuery((e.target as HTMLInputElement).value)} className="h-12 " />
 					
 					</div>
 			</section>
@@ -48,7 +49,7 @@ const [query,setQuery]=useState('')
 }
 
 
-function AllResults({data}:{data:[]}){
+function AllResults({data}:{data:string[]}){
 if(data.length<=1){
 	return<></>
 }
@@ -62,8 +63,9 @@ return<>	{
 }
 function Result({ title, href ,searchTerm,src,description}: { title: string; href: string; searchTerm:string;src:string;description:string }) {
 	return (
-		<div className="border-b rounded border-white/5 py-4 min-h-40 flex gap-4">
-			<Image className="rounded  h-32 w-auto aspect-square  object-cover" src={src} alt="" height={500} width={500}/>
+		<div className="border-b  border-white/5 py-4 min-h-40 flex gap-4 relative">
+			<Image className="shadow-xl rounded relative z-10  h-32 w-auto aspect-square  object-cover" src={src} alt="" height={500} width={500}/>
+			<Image className="absolute opacity-20  blur-3xl rounded  h-32 w-auto aspect-square  object-cover" src={src} alt="" height={500} width={500}/>
 			<div >
 			<Link className="  text-blue-400 hover:underline  text-lg" href={href}>
 				{title}
@@ -72,6 +74,7 @@ function Result({ title, href ,searchTerm,src,description}: { title: string; hre
 				{searchTerm}
 			</p>	
 			<p>{description}</p>
+			
 			</div>
 			
 		</div>

@@ -51,14 +51,14 @@ export default function Home() {
           </button>
         </form> */}
 					<SearchBar className={"mt-3 h-10"} />
-					<div className={`${JetBrainsMono.className} w-full mt-2 `}>
+					{/* <div className={`${JetBrainsMono.className} w-full mt-2 `}>
 						<h4 className="font-medium">Suggested</h4>
 						<ul className="font-thin italic text-sm opacity-60">
 							<li>Blue Sponge</li>
 							<li>Yellow Sponge</li>
 							<li>Green Sponge</li>
 						</ul>
-					</div>
+					</div> */}
 					<svg
 						width="600"
 						height="600"

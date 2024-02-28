@@ -10,15 +10,16 @@ export default function Page({ params }: { params: { id: string } }) {
   interface SpongeDetails {
     ClosestAttribute: string;
     value: {
-      Color: string;
-      Depth: string;
-      Distribution: string;
-      Habitat: string;
-      Name: string;
-      Size: string;
-      Type: string;
-	  Image:string;
-	  Description:string
+		[key:string]:string;
+    //   Color: string;
+    //   Depth: string;
+    //   Distribution: string;
+    //   Habitat: string;
+    //   Name: string;
+    //   Size: string;
+    //   Type: string;
+	//   Image:string;
+	//   Description:string
     };
   }
   const [spongeDetails, setSpongeDetails] = useState<SpongeDetails>({
@@ -53,7 +54,7 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
 			<main className="p-8">
 				{/* biome-ignore lint/a11y/noSvgWithoutTitle: <explanation> */}
-				<svg
+				{/* <svg
 					className="absolute -z-10 blur-[200px]"
 					width="500"
 					height="500"
@@ -81,13 +82,20 @@ export default function Page({ params }: { params: { id: string } }) {
 							<stop offset="1" stopColor="#80FFC9" />
 						</linearGradient>
 					</defs>
-				</svg>
+				</svg> */}
 <div className="w-2/3">
 
 				<SearchBar className=" h-12 mb-2" />
 </div>
 
-				<div className="flex gap-2">
+				<div className="flex gap-2 relative">
+					<Image
+						className="absolute blur-[200px]  transition-all duration-1000 -z-10 h-96 w-auto aspect-square rounded-lg object-cover"
+						src={`/Sponges/${spongeDetails.value.Image}`}
+						height={300}
+						width={300}
+						alt={""}
+					/>
 					<Image
 						className="h-96 w-auto aspect-square rounded-lg object-cover"
 						src={`/Sponges/${spongeDetails.value.Image}`}
@@ -106,6 +114,13 @@ export default function Page({ params }: { params: { id: string } }) {
 						<p className={`${SpaceGrotesk.className} text-sm font-thin w-96`}>
 						{spongeDetails.value.Description}
 						</p>
+						<div className="mt-4 w-96 flex flex-col">
+		{Object.keys(spongeDetails.value).filter(i=>i!=="Image"&&i!=="Description").map(ke=><div key={ke} className="flex"><h1 className="font-bold">{ke}</h1> : {spongeDetails.value[ke]}
+</div>)}
+	
+
+
+						</div>
 					</div>
 				</div>
 			</main>
