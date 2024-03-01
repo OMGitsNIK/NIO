@@ -13,150 +13,71 @@
 # res = np.hstack([img,gray_image,equ]) #stacking images side-by-side
 # cv.imwrite('res.png',res)
 
+from operator import itemgetter
+import pprint
 from PIL import Image
 import cv2
 from skimage import filters, exposure
 from flask import Flask, jsonify, send_file, request
 import os
 from flask_cors import CORS
-
+import json
 import uuid
 import numpy as np
 import matplotlib
+import enchant
 app = Flask(__name__)
 cors = CORS(app)
 UPLOAD_FOLDER = "Uploads"
-TEMP_DATABASE = [
-    {
-    "Name": "Azure Vase Sponge",
-    "Image": "Azure Vase Sponge.jpg",
-    "Type": "Callyspongia Plicifera",
-    "Habitat": "Coral reefs",
-    "Color": "Blue",
-    "Size": "Up to 60 cm",
-    "Distribution": "Caribbean Sea",
-    "Depth": "3-30 meters",
-    "Description": "The Azure Vase Sponge is a brightly colored sponge that is found in coral reefs in the Caribbean Sea. It is named for its vase-like shape and its blue color. This sponge can grow up to 60 cm tall and is an important part of the coral reef ecosystem."
-  },
-  {
-    "Name": "Black-Ball Sponge",
-    "Image": "Black-Ball Sponge.jpeg",
-    "Type": "Ircinia Strobilina",
-    "Habitat": "Coral reefs",
-    "Color": "Black",
-    "Size": "Up to 30 cm",
-    "Distribution": "Caribbean Sea",
-    "Depth": "3-30 meters",
-    "Description": "The Black-Ball Sponge is a spherical sponge that is found in coral reefs in the Caribbean Sea. It is named for its black color and its ball-like shape. This sponge can grow up to 30 cm in diameter and is an important part of the coral reef ecosystem."
-  },
-  {
-    "Name": "Boring Sponge",
-    "Image": "Boring Sponge.jpg",
-    "Type": "Cliona",
-    "Habitat": "Coral reefs",
-    "Color": "Yellow",
-    "Size": "Variable",
-    "Distribution": "Worldwide",
-    "Depth": "Variable",
-    "Description": "The Boring Sponge is a group of sponges that are found in coral reefs around the world. These sponges bore into the calcium carbonate skeletons of corals and other marine organisms. Boring sponges can grow to be a variety of sizes and colors. They play an important role in the breakdown of coral reefs."
-  },
-  {
-    "Name": "Branching Tube Sponge",
-    "Image": "Branching Tube Sponge.jpg",
-    "Type": "Ailochroia crassa",
-    "Habitat": "Coral reefs",
-    "Color": "Purple",
-    "Size": "Up to 1 m",
-    "Distribution": "Caribbean Sea",
-    "Depth": "3-30 meters",
-    "Description": "The Branching Tube Sponge is a purple sponge that is found in coral reefs in the Caribbean Sea. It is named for its branching shape and its tube-like structures. This sponge can grow up to 1 meter tall and is an important part of the coral reef ecosystem."
-  },
-  {
-    "Name": "Brown Vulcano Carpet Sponge",
-    "Image": "Brown Vulcano Carpet Sponge.jpg",
-    "Type": "Anthosigmella Varians",
-    "Habitat": "Coral reefs",
-    "Color": "Brown",
-    "Size": "Up to 1 m",
-    "Distribution": "Caribbean Sea",
-    "Depth": "3-30 meters",
-    "Description": "The Brown Vulcano Carpet Sponge is a brown sponge that is found in coral reefs in the Caribbean Sea. It is named for its volcano-like shape and its brown color. This sponge can grow up to 1 meter in diameter and is an important part of the coral reef ecosystem."
-  },
-  {
-    "Name": "Brown Tube Sponge",
-    "Image": "Brown Tube Sponge.jpg",
-    "Type": "Agelas Conifera",
-    "Habitat": "Coral reefs",
-    "Color": "Brown",
-    "Size": "Up to 1 m",
-    "Distribution": "Caribbean Sea",
-    "Depth": "3-30 meters",
-    "Description": "The Brown Tube Sponge is a brown sponge that is found in coral reefs in the Caribbean Sea. It is named for its tube-like shape and its brown color. This sponge can grow up to 1 meter tall and is an important part of the coral reef ecosystem."
-  },
-    {
-        "Name": "Brown Encrusting Octopus Sponge",
-        "Image": "Brown Encrusting Octopus Sponge.jpg",
-        "Type": "Ectyoplasia ferox",
-        "Habitat": "Coral reefs",
-        "Color": "Brown",
-        "Size": "Up to 30 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters",
-    "Description": "The Brown Encrusting Octopus Sponge is a brown sponge that encrusts the surfaces of rocks and coral reefs in the Caribbean Sea. It is named for its octopus-like shape and its brown color. This sponge can grow up to 30 cm in diameter and is an important part of the coral reef ecosystem."
-    },
-    {
-        "Name": "Branching Vase Sponge",
-        "Image": "Branching Vase Sponge.jpg",
-        "Type": "Callyspongia vaginalis",
-        "Habitat": "Coral reefs",
-        "Color": "Purple",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters",
-        "Description":"The Branching Vase Sponge is a purple sponge that is found in coral reefs in the Caribbean Sea. It is named for its branching shape and its vase-like structures. This sponge can grow up to 1 meter tall and is an important part of the coral reef ecosystem."
-    },
-    {
-        "Name": "Yellow Tube Sponge",
-        "Image": "Yellow Tube Sponge.jpg",
-        "Type": "Aplysina fistularis",
-        "Habitat": "Coral reefs",
-        "Color": "Yellow",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Description":"The Yellow Tube Sponge is a yellow sponge that is found in coral reefs in the Caribbean Sea. It is named for its tube-like shape and its yellow color. This sponge can grow up to 1 meter tall and is an important part of the coral reef ecosystem."
-    },
-    {
-        "Name": "Purple Vase Sponge",
-        "Image": "Purple Vase Sponge.jpeg",
-        "Type": "Niphates digitalis",
-        "Habitat": "Coral reefs",
-        "Color": "Purple",
-        "Size": "Up to 60 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters",
-        "Description":"The Purple Vase Sponge is a brightly colored sponge that is found in coral reefs in the Caribbean Sea. It is named for its vase-like shape and its purple color. This sponge can grow up to 60 cm tall and is an important part of the coral reef ecosystem."
-    }
-]
+from functools import cmp_to_key
 
-TD_SEPARATED = [item['Name'] for item in TEMP_DATABASE]
-TD_DICT = {item['Name']: item for item in TEMP_DATABASE}
+
+with open('public/data.json') as f:
+    DATASET=json.load(f)['Dataset']
+
+
+TD_SEPARATED = [item['Name'] for item in DATASET]
+TD_DICT = {item['Name']: item for item in DATASET}
 matplotlib.use('agg')
 
 
+def SortBySimilarity(a,b):
+    if a['similarity'] < b['similarity']:
+        return -1
+    elif a['similarity'] > b['similarity']:
+        return 1
+    else:
+        return 0
+
+@app.route('/GetDetails')
+def GetDetails():
+    query = request.args.get('q')
+    return next((d for d in DATASET if d["Name"] == query), None) 
 @app.route('/Search')
 def Search():
     query = request.args.get('q')
-    print(query)
+    # print(query)
     result = []
-    for item in TEMP_DATABASE:
-        for attribute in item:
-            attr = f"{attribute} : {item[attribute]}"
-
-            if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
-                result.append({"value": item, "ClosestAttribute": attr})
-                break
-    print(result)
-
+    MaxSim=0
+    for item in DATASET:
+        item['similarity']=enchant.utils.levenshtein(query, item['Name'])
+        MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+    print(MaxSim)
+    for item in DATASET:
+        if(item['similarity']<(((MaxSim)*3)/3)):
+            result.append({"value": item,"similarity":item['similarity'], "ClosestAttribute": f"{'Similarity'} : {item['similarity']}"})
+        # print(DATASET)
+        # =enchant.utils.levenshtein(query, item['Name'])
+        # MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+        
+        # if query.lower() in "".join(enchant.utils.levenshtein(string1, string2)).strip().replace(' ','').lower():
+        # for attribute in item:
+        #     attr = f"{attribute} : {item[attribute]}"
+        #     print(attr)
+        #     if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
+        #         result.append({"value": item, "ClosestAttribute": attr})
+        #         break
+    sorted(result, key=itemgetter('similarity'))
     return result
 
 
@@ -212,5 +133,11 @@ def ViewUploads(filename):
     return send_file(os.path.join(UPLOAD_FOLDER, filename), mimetype='image/jpg')
 
 
+@app.route('/public/<filename>')
+def ViewPublic(filename):
+    print(filename)
+    return send_file(os.path.join('public/Images/', filename), mimetype='image/jpg')
+
+
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
