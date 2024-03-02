@@ -13,131 +13,71 @@
 # res = np.hstack([img,gray_image,equ]) #stacking images side-by-side
 # cv.imwrite('res.png',res)
 
+from operator import itemgetter
+import pprint
 from PIL import Image
 import cv2
 from skimage import filters, exposure
 from flask import Flask, jsonify, send_file, request
 import os
 from flask_cors import CORS
-
+import json
 import uuid
 import numpy as np
 import matplotlib
+import enchant
 app = Flask(__name__)
 cors = CORS(app)
 UPLOAD_FOLDER = "Uploads"
-TEMP_DATABASE = [
-    {
-        "Name": "Azure Vase Sponge",
-        "Type": "Callyspongia Plicifera",
-        "Habitat": "Coral reefs",
-        "Color": "Blue",
-        "Size": "Up to 60 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Black-Ball Sponge",
-        "Type": "Ircinia Strobilina",
-        "Habitat": "Coral reefs",
-        "Color": "Black",
-        "Size": "Up to 30 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Boring Sponge",
-        "Type": "Cliona",
-        "Habitat": "Coral reefs",
-        "Color": "Yellow",
-        "Size": "Variable",
-        "Distribution": "Worldwide",
-        "Depth": "Variable"
-    },
-    {
-        "Name": "Branching Tube Sponge",
-        "Type": "Ailochroia crassa",
-        "Habitat": "Coral reefs",
-        "Color": "Purple",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Brown Vulcano Carpet Sponge",
-        "Type": "Anthosigmella Varians",
-        "Habitat": "Coral reefs",
-        "Color": "Brown",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Brown Tube Sponge",
-        "Type": "Agelas Conifera",
-        "Habitat": "Coral reefs",
-        "Color": "Brown",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Brown Encrusting Octopus Sponge",
-        "Type": "Ectyoplasia ferox",
-        "Habitat": "Coral reefs",
-        "Color": "Brown",
-        "Size": "Up to 30 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Branching Vase Sponge",
-        "Type": "Callyspongia vaginalis",
-        "Habitat": "Coral reefs",
-        "Color": "Purple",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Yellow Tube Sponge",
-        "Type": "Aplysina fistularis",
-        "Habitat": "Coral reefs",
-        "Color": "Yellow",
-        "Size": "Up to 1 m",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    },
-    {
-        "Name": "Purple Vase Sponge",
-        "Type": "Niphates digitalis",
-        "Habitat": "Coral reefs",
-        "Color": "Purple",
-        "Size": "Up to 60 cm",
-        "Distribution": "Caribbean Sea",
-        "Depth": "3-30 meters"
-    }
-]
+from functools import cmp_to_key
 
-TD_SEPARATED = [item['Name'] for item in TEMP_DATABASE]
-TD_DICT = {item['Name']: item for item in TEMP_DATABASE}
+
+with open('public/data.json') as f:
+    DATASET=json.load(f)['Dataset']
+
+
+TD_SEPARATED = [item['Name'] for item in DATASET]
+TD_DICT = {item['Name']: item for item in DATASET}
 matplotlib.use('agg')
 
 
+def SortBySimilarity(a,b):
+    if a['similarity'] < b['similarity']:
+        return -1
+    elif a['similarity'] > b['similarity']:
+        return 1
+    else:
+        return 0
+
+@app.route('/GetDetails')
+def GetDetails():
+    query = request.args.get('q')
+    return next((d for d in DATASET if d["Name"] == query), None) 
 @app.route('/Search')
 def Search():
     query = request.args.get('q')
-    print(query)
+    # print(query)
     result = []
-    for item in TEMP_DATABASE:
-        for attribute in item:
-            attr = f"{attribute} : {item[attribute]}"
-
-            if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
-                result.append({"value": item, "ClosestAttribute": attr})
-                break
-    print(result)
-
+    MaxSim=0
+    for item in DATASET:
+        item['similarity']=enchant.utils.levenshtein(query, item['Name'])
+        MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+    print(MaxSim)
+    for item in DATASET:
+        if(item['similarity']<(((MaxSim)*3)/3)):
+            result.append({"value": item,"similarity":item['similarity'], "ClosestAttribute": f"{'Similarity'} : {item['similarity']}"})
+        # print(DATASET)
+        # =enchant.utils.levenshtein(query, item['Name'])
+        # MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+        
+        # if query.lower() in "".join(enchant.utils.levenshtein(string1, string2)).strip().replace(' ','').lower():
+        # for attribute in item:
+        #     attr = f"{attribute} : {item[attribute]}"
+        #     print(attr)
+        #     if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
+        #         result.append({"value": item, "ClosestAttribute": attr})
+        #         break
+    sorted(result, key=itemgetter('similarity'))
     return result
 
 
@@ -199,6 +139,12 @@ def processImage():
 @app.route('/Uploads/<filename>')
 def ViewUploads(filename):
     return send_file(os.path.join(UPLOAD_FOLDER, filename), mimetype='image/jpg')
+
+
+@app.route('/public/<filename>')
+def ViewPublic(filename):
+    print(filename)
+    return send_file(os.path.join('public/Images/', filename), mimetype='image/jpg')
 
 
 if __name__ == "__main__":
