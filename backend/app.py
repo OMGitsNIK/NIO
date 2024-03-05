@@ -15,7 +15,7 @@
 
 from PIL import Image
 import cv2
-from skimage import filters, exposure
+from skimage import filters, exposure,segmentation
 from flask import Flask, jsonify, send_file, request
 import os
 from flask_cors import CORS
@@ -23,6 +23,8 @@ from flask_cors import CORS
 import uuid
 import numpy as np
 import matplotlib
+
+from modules.Image import classification
 app = Flask(__name__)
 cors = CORS(app)
 UPLOAD_FOLDER = "Uploads"
@@ -160,6 +162,28 @@ def Search():
     return result
 
 
+@app.route('/classify',methods=["POST"])
+def classify():
+    input_image = request.files.get("image")
+    print(input_image)
+    if not input_image:
+        return "No image uploaded!", 400
+    img = Image.open(input_image)
+    original_filename = input_image.filename.split('.')
+
+    pre_uuid_filename = ' '.join([str(elem)
+                                 for elem in original_filename[:-1]])
+    processed_filename = f'{pre_uuid_filename}_{uuid.uuid4()}.{original_filename[-1]}'
+    processed_image_path = os.path.join(
+        UPLOAD_FOLDER, f'{processed_filename}')
+    original_image_name = 'original_'+processed_filename
+    img.save(os.path.join(UPLOAD_FOLDER, original_image_name))
+    img = np.array(img)
+    classification.imageClassifier(img)
+    
+    return {'result':'1234jb'}
+    
+
 @app.route("/processImage", methods=["POST"])
 def processImage():
     input_image = request.files.get("image")
@@ -180,10 +204,11 @@ def processImage():
 
     # Processing Happens Here
     StackedFilers = [
-        {'name': 'sobel', 'iterations': 0},
-        # {'name': 'equalize_adapthist', 'iterations': 1},
-        {'name': 'gaussian', 'strength': 1, 'iterations': 20},
-        {'name': 'equalize_adapthist', 'iterations': 1},
+        # {'name': 'sobel', 'iterations': 0},
+        # # {'name': 'equalize_adapthist', 'iterations': 1},
+        # {'name': 'gaussian', 'strength': 1, 'iterations': 0},
+        # {'name': 'equalize_adapthist', 'iterations': 2},
+        {'name': 'segmentation', 'iterations': 1},
     ]
     x = img
     for filter in StackedFilers:
@@ -197,6 +222,10 @@ def processImage():
                 x = filters.gaussian(x, filter['strength'])
             if (filter['name'] == 'sobel'):
                 x = filters.sobel(x)
+            if(filter['name']=='segmentation'):
+                x=segmentation.morphological_chan_vese(x,2)
+                # x=filters.gaussian(x)
+                
             print(f'{filter} - {iteration}')
 
     x = np.array(x)
@@ -213,4 +242,4 @@ def ViewUploads(filename):
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)

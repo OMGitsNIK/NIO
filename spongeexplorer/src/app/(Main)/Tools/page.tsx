@@ -11,7 +11,23 @@ interface ImageData {
 
 export default function Page() {
   const [imageUrl, setImageUrl] = useState<ImageData[]>();
+  const [imageData, setImageData] = useState()
+  const [prediction, setPrediction] = useState()
 
+  // function classify() {
+
+  //   const fd = new FormData
+
+  //   fd.append('image', imageData)
+  //   console.log(fd)
+  //   console.log(imageData)
+  //   fetch("http://127.0.0.1:5000/classify", {
+  //     method: "POST",
+  //     body: fd
+  //   })
+  //     .then(resp => resp.json())
+  //     .then(d => setPrediction(d.result))
+  // }
   const handleUpload = async (e: any) => {
     e.preventDefault();
     const imageInput = e.target.elements.image;
@@ -23,7 +39,7 @@ export default function Page() {
 
     const formData = new FormData();
     formData.append("image", imageFile);
-    
+
     try {
       const response = await fetch("http://127.0.0.1:5000/processImage", {
         method: "POST",
@@ -35,12 +51,36 @@ export default function Page() {
       console.error(error);
     }
   };
+  // const handleUpload = async (e: any) => {
+  //   e.preventDefault();
+  //   const imageInput = e.target.elements.image;
+  //   const imageFile = imageInput.files[0];
+
+  //   if (!imageFile) {
+  //     return alert("Please select an image to upload.");
+  //   }
+
+  //   const formData = new FormData();
+  //   formData.append("image", imageFile);
+
+  //   try {
+  //     const response = await fetch("http://127.0.0.1:5000/classify", {
+  //       method: "POST",
+  //       body: formData,
+  //     });
+  //     const data = await response.json();
+  //     setPrediction(data.result);
+  //   } catch (error) {
+  //     console.error(error);
+  //   }
+  // };
+
 
   if (!imageUrl) {
     return (
       <main className="p-8 relative">
-        <form onSubmit={handleUpload}>
-          <input className="" type="file" id="image" name="image" required />
+        <form onSubmit={handleUpload} >
+          <input onChange={e => setImageData(e.target.value as any)} className="" type="file" id="image" name="image" required />
           <button
             className="rounded bg-yellow-500 hover:bg-yellow-300 text-black p-2"
             type="submit"
@@ -48,6 +88,7 @@ export default function Page() {
             Upload Image
           </button>
         </form>
+        <h1>Prediction : {prediction}</h1>
         <SidePanel />
       </main>
     );
