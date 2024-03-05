@@ -3,13 +3,13 @@ import Image from "next/image";
 import { Noto_Sans, Space_Grotesk } from "next/font/google";
 import { SearchBar } from "@/components/Search";
 import { useEffect, useState } from "react";
+import { config } from "@/config";
 
 const NotoSans = Noto_Sans({ subsets: ["latin"], weight: ["900"] });
 const SpaceGrotesk = Space_Grotesk({ subsets: ["latin"] });
 export default function Page({ params }: { params: { id: string } }) {
   interface SpongeDetails {
-    ClosestAttribute: string;
-    value: {
+  
 		[key:string]:string;
     //   Color: string;
     //   Depth: string;
@@ -20,11 +20,11 @@ export default function Page({ params }: { params: { id: string } }) {
     //   Type: string;
 	//   Image:string;
 	//   Description:string
-    };
+    
   }
   const [spongeDetails, setSpongeDetails] = useState<SpongeDetails>({
-    ClosestAttribute: "",
-    value: {
+
+
       Color: "",
       Depth: "",
       Distribution: "",
@@ -34,16 +34,17 @@ export default function Page({ params }: { params: { id: string } }) {
       Type: "",
 	  Image:"",
 	  Description:""
-    },
+    
   });
   useEffect(() => {
-    fetch(`http://127.0.0.1:5000/Search?q=${decodeURI(params.id)}`, {
+    fetch(`http://127.0.0.1:5000/GetDetails?q=${decodeURI(params.id)}`, {
       method: "get",
       redirect: "follow",
     })
       .then((response) => response.json())
       .then((result) => {
-        setSpongeDetails(result[0]);
+        setSpongeDetails(result);
+		console.log(result)
       })
       .catch((error) => console.log("error", error));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -90,32 +91,32 @@ export default function Page({ params }: { params: { id: string } }) {
 
 				<div className="flex gap-2 relative">
 					<Image
-						className="absolute blur-[200px]  transition-all duration-1000 -z-10 h-96 w-auto aspect-square rounded-lg object-cover"
-						src={`/Sponges/${spongeDetails.value.Image}`}
+						className="absolute blur-[200px]  transition-all -z-10 h-96 w-auto aspect-square rounded-lg object-cover"
+						src={`${config.SERVER_URL}/public/${spongeDetails.Image}`}
 						height={300}
 						width={300}
 						alt={""}
 					/>
 					<Image
-						className="h-96 w-auto aspect-square rounded-lg object-cover"
-						src={`/Sponges/${spongeDetails.value.Image}`}
+						className="h-96 w-auto aspect-square rounded-xl object-cover"
+						src={`${config.SERVER_URL}/public/${spongeDetails.Image}`}
 						height={300}
 						width={300}
 						alt={""}
 					/>
 					<div>
 						<h1 className={`text-3xl font-black ${NotoSans.className}`}>
-							{spongeDetails.value.Name}
+							{spongeDetails.Name}
 						</h1>
 						<h2 className={`text-lg font-black ${NotoSans.className}`}>
 							{" "}
-							{spongeDetails.value.Type}
+							{spongeDetails.Type}
 						</h2>
 						<p className={`${SpaceGrotesk.className} text-sm font-thin w-96`}>
-						{spongeDetails.value.Description}
+						{spongeDetails.Description}
 						</p>
 						<div className="mt-4 w-96 flex flex-col">
-		{Object.keys(spongeDetails.value).filter(i=>i!=="Image"&&i!=="Description").map(ke=><div key={ke} className="flex"><h1 className="font-bold">{ke}</h1> : {spongeDetails.value[ke]}
+		{Object.keys(spongeDetails).filter(i=>i!=="Image"&&i!=="Description").map(ke=><div key={ke} className="flex"><h1 className="font-bold">{ke}</h1> : {spongeDetails[ke]}
 </div>)}
 	
 

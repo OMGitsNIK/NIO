@@ -3,6 +3,7 @@ import { SearchBar } from "@/components/Search";
 import Link from "next/link";
 import Image from 'next/image'
 import { useEffect, useState } from "react";
+import { config } from "@/config";
 export default function Page() {
 const [results,setResults]=useState<string[]>([''])
 
@@ -56,7 +57,7 @@ if(data.length<=1){
 return<>	{
 	
 // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
-(data.map((i:any,idx:number)=><Result key={idx} title={i.value.Name} href={`/Search/Result/${i.value.Name}`} searchTerm={i.ClosestAttribute}  src={`/Sponges/${i.value.Image}`} description={i.value.Description} />))
+(data.map((i:any,idx:number)=><Result key={idx} title={i.value.Name} href={`/Search/Result/${i.value.Name}`} searchTerm={i.ClosestAttribute}  src={`${i.value.Image}`} description={i.value.Description} />))
 
 }</>
 
@@ -64,8 +65,8 @@ return<>	{
 function Result({ title, href ,searchTerm,src,description}: { title: string; href: string; searchTerm:string;src:string;description:string }) {
 	return (
 		<div className="border-b  border-white/5 py-4 min-h-40 flex gap-4 relative">
-			<Image className="shadow-xl rounded relative z-10  h-32 w-auto aspect-square  object-cover" src={src} alt="" height={500} width={500}/>
-			<Image className="absolute opacity-20  blur-3xl rounded  h-32 w-auto aspect-square  object-cover" src={src} alt="" height={500} width={500}/>
+			<Image className="shadow-xl rounded relative z-10  h-32 w-auto aspect-square  object-cover" src={`${config.SERVER_URL}/public/${src}`} alt="" height={500} width={500}/>
+			<Image className="absolute opacity-10  blur-3xl rounded  h-32 w-auto aspect-square  object-cover" src={`${config.SERVER_URL}/public/${src}`} alt="" height={500} width={500}/>
 			<div >
 			<Link className="  text-blue-400 hover:underline  text-lg" href={href}>
 				{title}

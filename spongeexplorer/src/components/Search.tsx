@@ -12,7 +12,7 @@ const spaceGrotesk = Space_Grotesk({
 export function SearchBar({className,onChange}:{className?:string;onChange?:React.ChangeEventHandler}) {
   const router = useRouter();
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
+  const [results, setResults] = useState<Array<{similarity:number}>>([]);
   const [showResults, setShowResults] = useState(false);
   const [searchFocused, setSearchFocused] = useState(false);
   useEffect(() => {
@@ -27,7 +27,6 @@ export function SearchBar({className,onChange}:{className?:string;onChange?:Reac
 					.then((response) => response.text())
 					.then((result) => {
 						setResults(JSON.parse(result));
-						console.log(result);
 					})
 					.catch((error) => console.log("error", error));
 			}
@@ -69,7 +68,7 @@ export function SearchBar({className,onChange}:{className?:string;onChange?:Reac
 							showResults ? "h-32 " : "h-0"
 						}  text-sm  w-full overflow-y-scroll rounded-b-xl smallScrollBar`}
 					>
-						{results.map((item) => {
+						{results.sort((a:any,b:any)=>a.similarity-b.similarity).map((item:any) => {
 							return (
 								<Link
 									href={`/Search/Result/${item["value"]["Name"]}`}
