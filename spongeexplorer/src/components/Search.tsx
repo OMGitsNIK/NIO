@@ -1,7 +1,8 @@
 "use client";
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import { MaterialSymbolsSearchRounded } from "../components/icons";
-import React, { useEffect, useState } from "react";
+import type React from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 const spaceGrotesk = Space_Grotesk({
@@ -41,14 +42,18 @@ export function SearchBar({className,onChange}:{className?:string;onChange?:Reac
 			>
 				<div
 					className={`w-full h-full min-h-12 ${
-						results.length === 0 ? "rounded-full" : " rounded-t-[1.5rem] border-b-white/0"
+						results.length === 0
+							? "rounded-full"
+							: " rounded-t-[1.5rem] border-b-white/0"
 					} overflow-hidden border transition-all duration-200  border-neutral-800 bg-neutral-950 flex`}
 				>
 					<input
-						onChange={(e) => onChange?onChange(e):setQuery(e.target.value)}
+						onChange={(e) =>
+							onChange ? onChange(e) : setQuery(e.target.value)
+						}
 						type="text"
 						className={
-							"font-thin   indent-2  text-sm h-full flex-grow bg-inherit p-2 flex items-center focus:outline-0 opacity-25"
+							"font-   indent-2  text-sm h-full flex-grow bg-inherit p-2 flex items-center focus:outline-0 opacity-50"
 						}
 					/>
 					<button
@@ -68,20 +73,22 @@ export function SearchBar({className,onChange}:{className?:string;onChange?:Reac
 							showResults ? "h-32 " : "h-0"
 						}  text-sm  w-full overflow-y-scroll rounded-b-xl smallScrollBar`}
 					>
-						{results.sort((a:any,b:any)=>a.similarity-b.similarity).map((item:any) => {
-							return (
-								<Link
-									href={`/Search/Result/${item["value"]["Name"]}`}
-									key={item["value"]["Name"]}
-									className="bg-[#060606] h-10 p-2 flex items-center gap-2 hover:bg-[#0F0F0F] w-full"
-								>
-									{item["value"]["Name"]}
-									<p className="text-xs text-white/20 h-full flex items-center overflow-hidden text-ellipsis">
-										{item["ClosestAttribute"]}
-									</p>
-								</Link>
-							);
-						})}
+						{results
+							.sort((a: any, b: any) => -a.similarity + b.similarity)
+							.map((item: any) => {
+								return (
+									<Link
+										href={`/Search/Result/${item["value"]["Name"]}`}
+										key={item["value"]["Name"]}
+										className="bg-[#060606] h-10 p-2 flex items-center gap-2 hover:bg-[#0F0F0F] w-full"
+									>
+										{item["value"]["Name"]}
+										<p className="text-xs text-white/20 h-full flex items-center overflow-hidden text-ellipsis">
+											{item["ClosestAttribute"]}
+										</p>
+									</Link>
+								);
+							})}
 					</div>
 				</div>
 			</div>

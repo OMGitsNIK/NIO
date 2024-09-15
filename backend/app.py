@@ -25,13 +25,13 @@ import json
 import uuid
 import numpy as np
 import matplotlib
-import enchant
+from difflib import SequenceMatcher
 
 from modules.Image import classification
+from functools import cmp_to_key
 app = Flask(__name__)
 cors = CORS(app)
 UPLOAD_FOLDER = "Uploads"
-from functools import cmp_to_key
 
 
 with open('public/data.json') as f:
@@ -55,31 +55,58 @@ def SortBySimilarity(a,b):
 def GetDetails():
     query = request.args.get('q')
     return next((d for d in DATASET if d["Name"] == query), None) 
-@app.route('/Search')
-def Search():
-    query = request.args.get('q')
-    # print(query)
-    result = []
-    MaxSim=0
-    for item in DATASET:
-        item['similarity']=enchant.utils.levenshtein(query, item['Name'])
-        MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
-    print(MaxSim)
-    for item in DATASET:
-        if(item['similarity']<(((MaxSim)*3)/3)):
-            result.append({"value": item,"similarity":item['similarity'], "ClosestAttribute": f"{'Similarity'} : {item['similarity']}"})
-        # print(DATASET)
-        # =enchant.utils.levenshtein(query, item['Name'])
-        # MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+# @app.route('/Search')
+# def Search():
+#     query = request.args.get('q')
+#     # print(query)
+#     result = []
+#     MaxSim=0
+#     for item in DATASET:
+#         item['similarity']=enchant.utils.levenshtein(query, item['Name'])
+#         MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
+#     print(MaxSim)
+#     for item in DATASET:
+#         if(item['similarity']<(((MaxSim)*3)/3)):
+#             result.append({"value": item,"similarity":item['similarity'], "ClosestAttribute": f"{'Similarity'} : {item['similarity']}"})
+#         # print(DATASET)
+#         # =enchant.utils.levenshtein(query, item['Name'])
+#         # MaxSim=item['similarity'] if item['similarity']>MaxSim else MaxSim 
         
-        # if query.lower() in "".join(enchant.utils.levenshtein(string1, string2)).strip().replace(' ','').lower():
-        # for attribute in item:
-        #     attr = f"{attribute} : {item[attribute]}"
-        #     print(attr)
-        #     if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
-        #         result.append({"value": item, "ClosestAttribute": attr})
-        #         break
-    sorted(result, key=itemgetter('similarity'))
+#         # if query.lower() in "".join(enchant.utils.levenshtein(string1, string2)).strip().replace(' ','').lower():
+#         # for attribute in item:
+#         #     attr = f"{attribute} : {item[attribute]}"
+#         #     print(attr)
+#         #     if query.lower().replace(" ", "") in str(attr).lower().replace(" ", "") or query.lower() in str(attr).lower().replace(" ", ""):
+#         #         result.append({"value": item, "ClosestAttribute": attr})
+#         #         break
+#     sorted(result, key=itemgetter('similarity'))
+#     return result
+
+
+@app.route("/Search")
+def Search():
+    query = request.args.get("q")
+    result = []
+    max_sim = 0
+
+    for item in DATASET:
+        similarity = SequenceMatcher(None, query.lower(), item["Name"].lower()).ratio()
+        item["similarity"] = similarity
+        max_sim = max(max_sim, similarity)
+
+    threshold = max_sim * 2 / 3  # Adjust this threshold as needed
+
+    for item in DATASET:
+        if item["similarity"] >= threshold:
+            result.append(
+                {
+                    "value": item,
+                    "similarity": item["similarity"],
+                    "ClosestAttribute": f"Similarity : {item['similarity']:.4f}",
+                }
+            )
+
+    result.sort(key=itemgetter("similarity"), reverse=True)
     return result
 
 
@@ -126,10 +153,10 @@ def processImage():
     # Processing Happens Here
     StackedFilers = [
         # {'name': 'sobel', 'iterations': 0},
-        # # {'name': 'equalize_adapthist', 'iterations': 1},
+         {'name': 'equalize_adapthist', 'iterations': 1},
         # {'name': 'gaussian', 'strength': 1, 'iterations': 0},
         # {'name': 'equalize_adapthist', 'iterations': 2},
-        {'name': 'segmentation', 'iterations': 1},
+        # {'name': 'segmentation', 'iterations': 1},
     ]
     x = img
     for filter in StackedFilers:
