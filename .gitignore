@@ -1,3 +1,2 @@
-backend/venv
-
-node_modules/uuid/dist/nil.js
+backend/v1/__pycache__/*.pyc
+*.pyc
