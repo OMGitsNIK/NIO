@@ -20,13 +20,15 @@ export function SearchBox() {
     size: string | null;
     texture: string | null;
   }>>(null);
+  const [query, setQuery] = useState("");
   const searchChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    const query = e.target.value;
-    console.log(query);
+    const _query = e.target.value;
+    setQuery(_query);
+    console.log(_query);
 
     axios
       .get(`${CONFIG.SERVER_URL}/v1/sponge/`, {
-        params: { q: query },
+        params: { q: _query },
       })
       .then((response) => {
         setResults(response.data);
@@ -48,10 +50,46 @@ export function SearchBox() {
         {results?.map((sponge) => (
           <Link
             href={`/sponge/${sponge.id}`}
-            className="w-full  text-start items-start justify-start flex   "
+            className="w-full p-2  hover:bg-neutral-800 text-start items-start justify-start flex gap-2   "
             key={sponge.id}
           >
-            {sponge.name}
+            <p>
+              {sponge.name
+                ?.split(new RegExp(`(${query})`, "gi"))
+                .map((part, index) =>
+                  part.toLowerCase() === query.toLowerCase() ? (
+                    <span
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                      key={index}
+                      className="bg-yellow-300 py-1 rounded  text-yellow-950"
+                    >
+                      {part}
+                    </span>
+                  ) : (
+                    part
+                  )
+                )}
+            </p>
+
+            {"  "}
+            <i className="text-sm opacity-60">
+              {" "}
+              {sponge.scientific_name
+                ?.split(new RegExp(`(${query})`, "gi"))
+                .map((part, index) =>
+                  part.toLowerCase() === query.toLowerCase() ? (
+                    <span
+                      // biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+                      key={index}
+                      className="bg-yellow-300 py-1 rounded  text-yellow-950"
+                    >
+                      {part}
+                    </span>
+                  ) : (
+                    part
+                  )
+                )}
+            </i>
           </Link>
         ))}
       </div>

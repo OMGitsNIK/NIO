@@ -21,9 +21,7 @@ class Sponges(models.Model):
 
 
 class SpongeImage(models.Model):
-    sponge = models.OneToOneField(
-        Sponges, on_delete=models.CASCADE, related_name="image"
-    )
+    sponge = models.ForeignKey(Sponges, on_delete=models.CASCADE, related_name="image")
     created_at = models.DateTimeField(default=timezone.now, blank=False, null=False)
     name = models.TextField()
     attribution = models.TextField()

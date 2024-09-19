@@ -5,4 +5,5 @@ urlpatterns = [
     path("sponge/", views.sponge),
     path("sponge/<id>", views.sponge_id),
     path("sponge/bulk/", views.sponge_bulk),
+    path("sponge/image/<id>/", views.sponge_image_id),
 ]

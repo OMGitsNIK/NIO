@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { CONFIG } from "@/lib/config";
 import axios from "axios";
+import Image from "next/image";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [sponge, setSponge] = useState<{
@@ -27,6 +28,14 @@ export default function Page({ params }: { params: { id: string } }) {
   return (
     <main className="p-8  ">
       <div className="flex">
+        <Image
+          src={`${CONFIG.SERVER_URL}/v1/sponge/image/${params.id}/`}
+          alt=""
+          className="aspect-square relative z-0 size-80 object-cover rounded-xs"
+          width={400}
+          height={400}
+          unoptimized
+        />
         <div className="w-1/2 pl-8">
           <h1 className="text-4xl font-bold  mb-2">{sponge.name}</h1>
           <p className="text-lg mb-4">{sponge.description}</p>
