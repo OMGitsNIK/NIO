@@ -4,6 +4,7 @@ import uuid
 
 
 class Sponges(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(default=timezone.now, blank=False, null=False)
     name = models.TextField()
     size = models.TextField()
@@ -12,21 +13,19 @@ class Sponges(models.Model):
     pores = models.TextField()
     habitat = models.TextField()
     location = models.TextField(null=True, blank=True)
-    scientific_name = models.TextField(unique=True, primary_key=True)
+    scientific_name = models.TextField(unique=True)
     description = models.TextField()
 
     def __str__(self):
         return self.scientific_name
 
 
-class Images(models.Model):
-    sponge = models.ForeignKey(
-        Sponges, on_delete=models.CASCADE, related_name="images", null=False
-    )
+class SpongeImage(models.Model):
+    sponge = models.ForeignKey(Sponges, on_delete=models.CASCADE, related_name="image")
     created_at = models.DateTimeField(default=timezone.now, blank=False, null=False)
     name = models.TextField()
     attribution = models.TextField()
-    blob = models.ImageField()
+    image = models.ImageField(upload_to="sponges/")
 
     def __str__(self):
-        return f"{self.name}: {self.attribution}"
+        return f"Image for {self.sponge.scientific_name}"

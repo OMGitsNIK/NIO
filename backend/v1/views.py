@@ -1,9 +1,11 @@
 import io
-from django.http import JsonResponse
+from django.forms.models import model_to_dict
+from django.http import JsonResponse, FileResponse
 from django.views.decorators.csrf import csrf_exempt
 from icecream import ic
 import json
 import logging
+from django.shortcuts import get_object_or_404
 from django.db.models import Q
 from django.core.files.storage import FileSystemStorage
 import polars as pl
@@ -31,7 +33,11 @@ def sponge(request):
             )
         limit = int(request.GET.get("limit", 8))
 
-        return JsonResponse(list(sponges.values())[:limit], safe=False)
+        sponges_list = list(sponges.values())
+        if limit > 0:
+            sponges_list = sponges_list[:limit]
+
+        return JsonResponse(sponges_list, safe=False)
 
     if request.method == "POST":
         ic("in post")
@@ -58,6 +64,17 @@ def sponge(request):
 
             return JsonResponse({"error": str(e)}, status=400)
 
+def sponge_id(request, id):
+    ic("sponge")
+    ic(id)
+
+    sponge = get_object_or_404(models.Sponges, id=id)
+    ic(sponge)
+
+    return JsonResponse(
+        model_to_dict(sponge),
+        status=201,
+    )
 
 @csrf_exempt
 def sponge_bulk(request):
@@ -103,15 +120,50 @@ def sponge_bulk(request):
 
 
 @csrf_exempt
-def image(request):
+def sponge_image_id(request, id):
     if request.method == "POST":
+        ic(id)
+        ic(request.FILES)
         try:
-            sponge_id = request.data.get("sponge")
-            image = models.Images.objects.create(
-                sponge_id=sponge_id,
-                attribution=request.data.get("attribution"),
-                blob=request.FILES.get("blob"),
+            sponge = models.Sponges.objects.get(id=id)
+            image = models.SpongeImage.objects.create(
+                sponge=sponge,
+                name=request.POST.get("name", ""),
+                attribution=request.POST.get("attribution", ""),
+                image=request.FILES.get("image"),
             )
             return JsonResponse({"id": image.id, "name": image.name}, status=201)
+        except models.Sponges.DoesNotExist:
+            return JsonResponse({"error": "Sponge not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    elif request.method == "GET":
+        try:
+            image = get_object_or_404(models.SpongeImage, sponge_id=id)
+            return FileResponse(open(image.image.path, "rb"), content_type="image/jpeg")
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+@csrf_exempt
+def image(request, id):
+    if request.method == "POST":
+        try:
+            sponge = models.Sponges.objects.get(id=id)
+            image = models.SpongeImage.objects.create(
+                sponge=sponge,
+                name=request.POST.get("name"),
+                attribution=request.POST.get("attribution"),
+                image=request.FILES.get("image"),
+            )
+            return JsonResponse({"id": image.id, "name": image.name}, status=201)
+        except models.Sponges.DoesNotExist:
+            return JsonResponse({"error": "Sponge not found"}, status=404)
+        except Exception as e:
+            return JsonResponse({"error": str(e)}, status=400)
+
+    elif request.method == "GET":
+        try:
+            image = get_object_or_404(models.SpongeImage, sponge_id=id)
+            return FileResponse(open(image.image.path, "rb"), content_type="image/jpeg")
         except Exception as e:
             return JsonResponse({"error": str(e)}, status=400)
