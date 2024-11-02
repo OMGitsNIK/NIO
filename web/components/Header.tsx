@@ -33,9 +33,9 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Dr. Jane Smith</p>
+                    <p className="text-sm font-medium leading-none">Rhys GOAT</p>
                     <p className="text-xs leading-none text-muted-foreground">
-                      j.smith@research.edu
+                      nio.in
                     </p>
                   </div>
                 </DropdownMenuLabel>

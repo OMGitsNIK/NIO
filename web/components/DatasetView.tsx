@@ -1,5 +1,3 @@
-"use client"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,22 +10,16 @@ import {
 import { Grid, List, MoreHorizontal, Plus } from "lucide-react"
 import { NewDatasetModal } from "./NewDatasetModal"
 import { EditDatasetModal } from "./EditDatasetModal"
-
-type Dataset = {
-  id: number
-  name: string
-  species: string
-  location: string
-  date: string
-  access: "Full" | "View"
-  thumbnail: string
-}
+import { Dataset } from "./Dashboard"
+import Image from "next/image"
 
 type DatasetViewProps = {
   datasets: Dataset[]
+  onAddDataset: (newDataset: Omit<Dataset, "id">) => void
+  onDeleteDataset: (id: number) => void
 }
 
-export function DatasetView({ datasets }: DatasetViewProps) {
+export function DatasetView({ datasets, onAddDataset, onDeleteDataset }: DatasetViewProps) {
   const [view, setView] = useState<"grid" | "list">("grid")
   const [selectedDataset, setSelectedDataset] = useState<Dataset | null>(null)
   const [isNewDatasetModalOpen, setIsNewDatasetModalOpen] = useState(false)
@@ -54,7 +46,7 @@ export function DatasetView({ datasets }: DatasetViewProps) {
           {datasets.map((dataset) => (
             <Card key={dataset.id}>
               <CardHeader className="relative">
-                <img src={dataset.thumbnail} alt={dataset.name} className="w-full h-40 object-cover rounded-t-lg" />
+                <Image src={dataset.thumbnail} alt={dataset.name} width={300} height={200} className="w-full h-40 object-cover rounded-t-lg" />
                 <CardTitle className="mt-2">{dataset.name}</CardTitle>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -64,7 +56,7 @@ export function DatasetView({ datasets }: DatasetViewProps) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
                     <DropdownMenuItem onSelect={() => setSelectedDataset(dataset)}>Edit</DropdownMenuItem>
-                    <DropdownMenuItem>Delete</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => onDeleteDataset(dataset.id)}>Delete</DropdownMenuItem>
                     <DropdownMenuItem>Share</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -86,7 +78,7 @@ export function DatasetView({ datasets }: DatasetViewProps) {
         <div className="space-y-4">
           {datasets.map((dataset) => (
             <div key={dataset.id} className="flex items-center space-x-4 bg-white dark:bg-gray-800 p-4 rounded-lg shadow">
-              <img src={dataset.thumbnail} alt={dataset.name} className="w-20 h-20 object-cover rounded" />
+              <Image src={dataset.thumbnail} alt={dataset.name} width={80} height={80} className="w-20 h-20 object-cover rounded" />
               <div className="flex-1">
                 <h3 className="text-lg font-semibold">{dataset.name}</h3>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -101,7 +93,11 @@ export function DatasetView({ datasets }: DatasetViewProps) {
         </div>
       )}
 
-      <NewDatasetModal isOpen={isNewDatasetModalOpen} onClose={() => setIsNewDatasetModalOpen(false)} />
+      <NewDatasetModal 
+        isOpen={isNewDatasetModalOpen} 
+        onClose={() => setIsNewDatasetModalOpen(false)} 
+        onAddDataset={onAddDataset}
+      />
       <EditDatasetModal dataset={selectedDataset} onClose={() => setSelectedDataset(null)} />
     </>
   )
