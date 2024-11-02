@@ -12,6 +12,7 @@ import { NewDatasetModal } from "./NewDatasetModal"
 import { EditDatasetModal } from "./EditDatasetModal"
 import { Dataset } from "./Dashboard"
 import Image from "next/image"
+import Link from "next/link"
 
 type DatasetViewProps = {
   datasets: Dataset[]
@@ -67,9 +68,11 @@ export function DatasetView({ datasets, onAddDataset, onDeleteDataset }: Dataset
                 <p><strong>Date:</strong> {dataset.date}</p>
               </CardContent>
               <CardFooter>
-                <Button variant={dataset.access === "Full" ? "default" : "secondary"} className="w-full">
-                  {dataset.access === "Full" ? "Edit Dataset" : "View Dataset"}
-                </Button>
+              <Link href={`/dataset`}>
+              <Button variant={dataset.access === "Full" ? "default" : "secondary"}>
+                {dataset.access === "Full" ? "Edit Dataset" : "View Dataset"}
+              </Button>
+              </Link>
               </CardFooter>
             </Card>
           ))}
@@ -85,9 +88,11 @@ export function DatasetView({ datasets, onAddDataset, onDeleteDataset }: Dataset
                   {dataset.species} | {dataset.location} | {dataset.date}
                 </p>
               </div>
+              <Link href={`/dataset`}>
               <Button variant={dataset.access === "Full" ? "default" : "secondary"}>
-                {dataset.access === "Full" ? "Edit" : "View"}
+                {dataset.access === "Full" ? "Edit Dataset" : "View Dataset"}
               </Button>
+              </Link>
             </div>
           ))}
         </div>
