@@ -1,0 +1,47 @@
+[
+    {
+        "id": 1,
+        "name": "Coral Reef Survey 2023",
+        "species": "Various Coral Species",
+        "location": "Great Barrier Reef",
+        "date": "2023-06-15",
+        "access": "Full",
+        "thumbnail": "/images_1.jpg"
+    },
+    {
+        "id": 2,
+        "name": "Rainforest Biodiversity Study",
+        "species": "Amazonian Flora",
+        "location": "Amazon Rainforest",
+        "date": "2023-08-22",
+        "access": "View",
+        "thumbnail": "/images_2.jpg"
+    },
+    {
+        "id": 3,
+        "name": "Arctic Ice Core Samples",
+        "species": "N/A",
+        "location": "Greenland",
+        "date": "2023-03-10",
+        "access": "Full",
+        "thumbnail": "/images_3.jpg"
+    },
+    {
+        "id": 4,
+        "name": "Savanna Mammal Migration Patterns",
+        "species": "Various Mammals",
+        "location": "Serengeti",
+        "date": "2023-09-05",
+        "access": "Full",
+        "thumbnail": "/images_4.jpg"
+    },
+    {
+        "id": 5,
+        "name": "Deep Sea Vent Ecosystem",
+        "species": "Hydrothermal Vent Organisms",
+        "location": "Pacific Ocean",
+        "date": "2023-11-30",
+        "access": "View",
+        "thumbnail": "/images_5.jpg"
+    }
+]
