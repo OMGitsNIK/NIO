@@ -1,61 +1,66 @@
-"use client";
+"use client"
 
-import { CONFIG } from "@/lib/config";
-import axios from "axios";
-import Image from "next/image";
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react"
+import { DashboardHeader } from "@/components/DashboardHeader"
+import { SidebarComponent } from "@/components/Sidebar"
+import { DatasetView } from "@/components/DatasetView"
 
-export default function Page() {
-  const [results, setResults] = useState<null | Array<{
-    color: string | null;
-    created_at: string;
-    habitat: string | null;
-    id: number;
-    location: string | null;
-    name: string | null;
-    pores: string | null;
-    scientific_name: string | null;
-    size: string | null;
-    texture: string | null;
-  }>>(null);
+interface Dataset {
+  id: number
+  title: string
+  description: string
+  items: number
+  createdDate: string
+  image: string
+}
+
+export default function DashboardPage() {
+  const [datasets, setDatasets] = useState<Dataset[]>([]);
+
   useEffect(() => {
-    axios
-      .get(`${CONFIG.SERVER_URL}/v1/sponge/?limit=0`)
-      .then((response) => {
-        setResults(response.data);
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
-      });
+    const fetchData = async () => {
+      const response = await fetch('/dataset.json');
+      const data = await response.json();
+      setDatasets(data);
+    };
+
+    fetchData();
   }, []);
 
-  return (
-    <main className="p-8">
-      <h1 className="text-2xl">Sponges</h1>
+  const addDataset = (newDataset: Omit<Dataset, "id">) => {
+    setDatasets(prevDatasets => [
+      ...prevDatasets,
+      { ...newDataset, id: prevDatasets.length + 1 }
+    ])
+  }
 
-      <div className="columns-2 md:columns-4 space-y-3 mt-3">
-        {results?.map((sponge) => (
-          <Link
-            href={`/dashboard/sponge/${sponge.id}`}
-            key={sponge.id}
-            className="aspect-square w-full block relative cursor-pointer   "
-          >
-            <Image
-              src={`${CONFIG.SERVER_URL}/v1/sponge/image/${sponge.id}/`}
-              alt=""
-              className="aspect-square object-cover"
-              width={500}
-              height={500}
-              unoptimized
-            />
-            <div className="absolute bottom-0 left-0  p-2 backdrop-blur-md w-full">
-              <h1 className="font-bold">{sponge.name}</h1>
-              <h1 className="text-sm">{sponge.scientific_name}</h1>
-            </div>
-          </Link>
-        ))}
+  const editDataset = (id: number, updatedDataset: Partial<Dataset>) => {
+    setDatasets(prevDatasets =>
+      prevDatasets.map(dataset =>
+        dataset.id === id ? { ...dataset, ...updatedDataset } : dataset
+      )
+    )
+  }
+
+  const deleteDataset = (id:number) => {
+    setDatasets(prevDatasets =>
+      prevDatasets.filter(dataset =>dataset.id!=id)
+    )
+  }
+
+  return (
+    <div className="flex h-screen overflow-hidden bg-white">
+      <SidebarComponent onAddDataset={addDataset} />
+      <div className="flex flex-col flex-1 overflow-hidden">
+        <DashboardHeader />
+        <main className="flex-1 overflow-auto p-6 md:w-[75%] w-full">
+          <DatasetView 
+          datasets={datasets} 
+          onEditDataset={editDataset}
+          onDeleteDataset={deleteDataset}
+           />
+        </main>
       </div>
-    </main>
-  );
+    </div>
+  )
 }

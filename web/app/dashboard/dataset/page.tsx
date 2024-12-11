@@ -4,10 +4,10 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { Header } from "@/components/Header"
-import { Sidebar } from "@/components/Sidebar"
 import axios from "axios" // Import axios for making API requests
 import { CONFIG } from "@/lib/config"
+import { DashboardHeader } from "@/components/DashboardHeader"
+import { SidebarComponent } from "@/components/Sidebar"
 
 export default function DatasetImages() {
     const [results, setResults] = useState<null | Array<{
@@ -35,12 +35,14 @@ export default function DatasetImages() {
     
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
-      <Sidebar />
+    <SidebarComponent onAddDataset={function (dataset: { title: string; description: string; image: string; items: number; createdDate: string }): void {
+              throw new Error("Function not implemented.")
+          } } />
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4">
-          <h2 className="text-xl font-semibold mb-4">Sponges</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <DashboardHeader />
+        <main className="flex-1 overflow-y-auto p-4 md:w-[80%] w-full">
+          <h2 className="text-black text-xl font-semibold mb-4">Sponges</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {results?.map((sponge) => (
           <Link
             href={`/dashboard/sponge/${sponge.id}`}
