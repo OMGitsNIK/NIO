@@ -9,7 +9,7 @@ interface AnalysisSidebarProps {
 
 export function AnalysisSidebar({ file }: AnalysisSidebarProps) {
   return (
-    <div className="w-64 border-l bg-background p-6 flex flex-col gap-6 overflow-auto text-black">
+    <div className=" border-l bg-background p-6 flex flex-col gap-6 overflow-y-scroll text-black">
       <h2 className="text-lg font-semibold">Report Generation</h2>
       
       <div className="space-y-4">

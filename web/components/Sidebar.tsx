@@ -42,14 +42,14 @@ export function SidebarComponent({ onAddDataset }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-40 h-full bg-white text-black border-r transition-all duration-300 md:relative md:translate-x-0",
+          "fixed top-0  left-0 z-40 h-full bg-white text-black border-r transition-all duration-300 md:relative md:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0",
           isMinimized ? "w-16" : "w-60"
         )}
       >
         {/* Toggle Button */}
         <button
-          className="hidden md:block p-2 rounded-full bg-white text-black border shadow m-4"
+          className="hidden md:block p-2 rounded-full absolute right-1  bg-white text-black border shadow m-4"
           onClick={() => setIsMinimized(!isMinimized)}
         >
           {isMinimized ? ">" : "<"}
