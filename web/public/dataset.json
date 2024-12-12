@@ -1,0 +1,50 @@
+[
+    {
+      "id": 1,
+      "title": "Maldives Tube Sponges",
+      "description": "Collection of tube sponges from the Maldives",
+      "items": 126,
+      "createdDate": "12th October 2024",
+      "image": "/sponges/images_1.jpg"
+    },
+    {
+      "id": 2,
+      "title": "Caribbean Barrel Sponges",
+      "description": "Barrel sponges found in the Caribbean Sea",
+      "items": 98,
+      "createdDate": "15th October 2024",
+      "image": "/sponges/images_2.jpg"
+    },
+    {
+      "id": 3,
+      "title": "Mediterranean Sea Sponges",
+      "description": "Various sponge species from the Mediterranean",
+      "items": 157,
+      "createdDate": "18th October 2024",
+      "image": "/sponges/images_3.jpg"
+    },
+    {
+        "id": 4,
+        "title": "Great Barrier Reef Corals",
+        "description": "A diverse collection of coral species from the Great Barrier Reef",
+        "items": 250,
+        "createdDate": "22nd October 2024",
+        "image": "/sponges/images_4.jpg"
+      },
+      {
+        "id": 5,
+        "title": "Red Sea Fish",
+        "description": "A variety of colorful fish species found in the Red Sea",
+        "items": 180,
+        "createdDate": "25th October 2024",
+        "image": "/sponges/images_5.jpg"
+      },
+      {
+        "id": 6,
+        "title": "Pacific Ocean Mollusks",
+        "description": "A collection of mollusks from the Pacific Ocean, including clams, oysters, and snails",
+        "items": 135,
+        "createdDate": "28th October 2024",
+        "image": "/sponges/images_6.jpg"
+      }
+  ]

@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
+import {Rubik} from 'next/font/google'
 import "./globals.css";
-import { NavBar } from "@/components/nav";
+import { cn } from "@/lib/utils";
+import { DashboardLayout } from "@/components/Sidebar";
 
-const geistSans = localFont({
-	src: "./fonts/GeistVF.woff",
-	variable: "--font-geist-sans",
-	weight: "100 900",
-});
-const geistMono = localFont({
-	src: "./fonts/GeistMonoVF.woff",
-	variable: "--font-geist-mono",
-	weight: "100 900",
+
+
+const rubik = Rubik({
+	subsets: ["latin"],
+	weight: ["400", "500", "600", "700"],
+	display: "swap",
+	fallback: ["Helvetica", "Arial", "sans-serif"],
 });
 
 export const metadata: Metadata = {
@@ -26,11 +25,11 @@ export default function RootLayout({
 }>) {
 	return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased dark bg-neutral-950 text-white`}
-      >
-        <NavBar />
-        {children}
+      <body>
+          <main className={cn("pl-[var(--sidebar-width)] transition-[padding] duration-300 ease-in-out",rubik.className)}>
+            {children}
+          </main>
+        
       </body>
     </html>
   );
