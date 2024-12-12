@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { DashboardHeader } from "@/components/DashboardHeader"
 import { SidebarComponent } from "@/components/Sidebar"
 import { DatasetView } from "@/components/DatasetView"
+import axios from "axios"
 
 interface Dataset {
   id: number
@@ -19,7 +20,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const response = await fetch('/dataset.json');
+      const response = await fetch('http://192.168.137.174:8000/v1/dataset');
       const data = await response.json();
       setDatasets(data);
     };
@@ -28,6 +29,7 @@ export default function DashboardPage() {
   }, []);
 
   const addDataset = (newDataset: Omit<Dataset, "id">) => {
+    axios.post('http://192.168.137.174:8000/v1/dataset', newDataset)
     setDatasets(prevDatasets => [
       ...prevDatasets,
       { ...newDataset, id: prevDatasets.length + 1 }
