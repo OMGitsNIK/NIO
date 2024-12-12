@@ -1,6 +1,9 @@
+"use client"
+
+import { useState, useCallback } from "react"
+import Image from "next/image"
+import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -8,127 +11,134 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
-import { useState } from "react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Plus } from 'lucide-react'
 
-type NewDatasetModalProps = {
-  isOpen: boolean
-  onClose: () => void
-  onAddDataset: (dataset: Dataset) => void
+interface NewDatasetModalProps {
+  onAddDataset: (dataset: {
+    title: string
+    description: string
+    image: string
+    items: number
+    createdDate: string
+  }) => void
 }
 
-// ... existing code ...
+export function NewDatasetModal({ onAddDataset }: NewDatasetModalProps) {
+  const [open, setOpen] = useState(false)
+  const [datasetName, setDatasetName] = useState("")
+  const [datasetDescription, setDatasetDescription] = useState("")
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string>("")
 
-export function NewDatasetModal({ isOpen, onClose, onAddDataset }: NewDatasetModalProps) {
-    const [name, setName] = useState("")
-    const [species, setSpecies] = useState("")
-    const [location, setLocation] = useState("")
-    const [date, setDate] = useState("")
-    const [thumbnail, setThumbnail] = useState<File | null>(null)
-  
-    const handleSubmit = (e: React.FormEvent) => {
-      e.preventDefault()
-  
-      // Handle image upload logic here
-      const thumbnailUrl = thumbnail ? URL.createObjectURL(thumbnail) : "/placeholder.svg?height=100&width=100"
-  
-      onAddDataset({
-        name,
-        species,
-        location,
-        date,
-        access: "Full",
-        thumbnail: thumbnailUrl
-      })
-      onClose()
-      // Reset form
-      setName("")
-      setSpecies("")
-      setLocation("")
-      setDate("")
-      setThumbnail(null)
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles?.[0]) {
+      setImage(acceptedFiles[0])
+      setPreview(URL.createObjectURL(acceptedFiles[0]))
     }
-  
-    return (
-      <Dialog open={isOpen} onOpenChange={onClose}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Create New Dataset</DialogTitle>
-            <DialogDescription>
-              Enter the details for your new dataset. Click save when you're done.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleSubmit}>
-            <div className="grid gap-4 py-4">
-              {/* Existing input fields */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="name" className="text-right">
-                  Name
-                </Label>
-                <Input 
-                  id="name" 
-                  value={name} 
-                  onChange={(e) => setName(e.target.value)} 
-                  className="col-span-3" 
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="species" className="text-right">
-                  Species
-                </Label>
-                <Input 
-                  id="species" 
-                  value={species} 
-                  onChange={(e) => setSpecies(e.target.value)} 
-                  className="col-span-3" 
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="location" className="text-right">
-                  Location
-                </Label>
-                <Input 
-                  id="location" 
-                  value={location} 
-                  onChange={(e) => setLocation(e.target.value)} 
-                  className="col-span-3" 
-                  required
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="date" className="text-right">
-                  Date
-                </Label>
-                <Input 
-                  id="date" 
-                  type="date" 
-                  value={date} 
-                  onChange={(e) => setDate(e.target.value)} 
-                  className="col-span-3" 
-                  required
-                />
-              </div>
-              {/* New file input for image */}
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="thumbnail" className="text-right">
-                  Thumbnail
-                </Label>
-                <Input 
-                  id="thumbnail" 
-                  type="file" 
-                  accept="image/*" 
-                  onChange={(e) => setThumbnail(e.target.files ? e.target.files[0] : null)} 
-                  className="col-span-3"
-                />
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpeg': ['.jpeg', '.jpg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
+    },
+    multiple: false
+  })
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    if (datasetName && datasetDescription && preview) {
+      onAddDataset({
+        title: datasetName,
+        description: datasetDescription,
+        image: preview,
+        items: 0,
+        createdDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      })
+      setOpen(false)
+      setDatasetName("")
+      setDatasetDescription("")
+      setImage(null)
+      setPreview("")
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button className="w-32 py-6 mx-8 bg-[#02B1CC] hover:bg-teal-700 text-white text-xl font-mono rounded-xl">
+          <Plus className=" h-4 w-4" />
+          New
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="sm:max-w-[425px] bg-white text-black">
+        <DialogHeader>
+          <DialogTitle>Add New Dataset</DialogTitle>
+          <DialogDescription>
+            Create a new dataset for sponge analysis. Fill out the details below.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleSubmit}>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="name" className="text-right">
+                Name
+              </Label>
+              <Input
+                id="name"
+                value={datasetName}
+                onChange={(e) => setDatasetName(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="description" className="text-right">
+                Description
+              </Label>
+              <Input
+                id="description"
+                value={datasetDescription}
+                onChange={(e) => setDatasetDescription(e.target.value)}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label className="text-right">Image</Label>
+              <div
+                {...getRootProps()}
+                className="col-span-3 border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              >
+                <input {...getInputProps()} />
+                {preview ? (
+                  <div className="relative w-full h-32">
+                    <Image
+                      src={preview}
+                      alt="Dataset preview"
+                      fill
+                      className="object-cover rounded-md"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-500">
+                    {isDragActive
+                      ? "Drop the image here"
+                      : "Drag 'n' drop an image here, or click to select one"}
+                  </p>
+                )}
               </div>
             </div>
-            <DialogFooter>
-              <Button type="submit">Save changes</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-    )
-  }
+          </div>
+          <DialogFooter>
+            <Button type="submit">Add Dataset</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}

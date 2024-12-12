@@ -1,7 +1,9 @@
-import { useState, useEffect } from "react"
+"use client"
+
+import { useState, useCallback } from "react"
+import Image from "next/image"
+import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
   Dialog,
   DialogContent,
@@ -9,140 +11,116 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Dataset } from "@/app/dashboard/researcher/page"
-import Image from "next/image"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
-type EditDatasetModalProps = {
-  dataset: Dataset | null
-  onClose: () => void
-  onUpdateDataset: (updatedDataset: Dataset) => void
+interface Dataset {
+  id: number
+  title: string
+  description: string
+  items: number
+  createdDate: string
+  image: string
 }
 
-export function EditDatasetModal({ dataset, onClose, onUpdateDataset }: EditDatasetModalProps) {
-  const [name, setName] = useState("")
-  const [species, setSpecies] = useState("")
-  const [location, setLocation] = useState("")
-  const [date, setDate] = useState("")
-  const [thumbnail, setThumbnail] = useState<File | null>(null)
-  const [thumbnailPreview, setThumbnailPreview] = useState("")
+interface EditDatasetModalProps {
+  children: React.ReactNode
+  dataset: Dataset
+  onEditDataset: (id: number, updatedDataset: Partial<Dataset>) => void
+}
 
-  useEffect(() => {
-    if (dataset) {
-      setName(dataset.name)
-      setSpecies(dataset.species)
-      setLocation(dataset.location)
-      setDate(dataset.date)
-      setThumbnailPreview(dataset.thumbnail)
-    }
-  }, [dataset])
+export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatasetModalProps) {
+  const [open, setOpen] = useState(false)
+  const [datasetName, setDatasetName] = useState(dataset.title)
+  const [datasetDescription, setDatasetDescription] = useState(dataset.description)
+  const [image, setImage] = useState<File | null>(null)
+  const [preview, setPreview] = useState<string>(dataset.image)
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (dataset) {
-      const updatedDataset: Dataset = {
-        ...dataset,
-        name,
-        species,
-        location,
-        date,
-        thumbnail: thumbnail ? URL.createObjectURL(thumbnail) : dataset.thumbnail
-      }
-      onUpdateDataset(updatedDataset)
-      onClose()
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    if (acceptedFiles?.[0]) {
+      setImage(acceptedFiles[0])
+      setPreview(URL.createObjectURL(acceptedFiles[0]))
     }
+  }, [])
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpeg': ['.jpeg', '.jpg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
+    },
+    multiple: false
+  })
+
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault()
+    onEditDataset(dataset.id, {
+      title: datasetName,
+      description: datasetDescription,
+      image: preview,
+    })
+    setOpen(false)
   }
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setThumbnail(e.target.files[0])
-      setThumbnailPreview(URL.createObjectURL(e.target.files[0]))
-    }
-  }
-
-  if (!dataset) return null
 
   return (
-    <Dialog open={!!dataset} onOpenChange={onClose}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {children}
+      </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>Edit Dataset</DialogTitle>
           <DialogDescription>
-            Make changes to the dataset. Click save when you're done.
+            Make changes to your dataset here. Click save when you're done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-name"   className="text-right">
+              <Label htmlFor="name" className="text-right">
                 Name
               </Label>
-              <Input 
-                id="edit-name" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                className="col-span-3" 
-                required
+              <Input
+                id="name"
+                value={datasetName}
+                onChange={(e) => setDatasetName(e.target.value)}
+                className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-species" className="text-right">
-                Species
+              <Label htmlFor="description" className="text-right">
+                Description
               </Label>
-              <Input 
-                id="edit-species" 
-                value={species} 
-                onChange={(e) => setSpecies(e.target.value)} 
-                className="col-span-3" 
-                required
+              <Input
+                id="description"
+                value={datasetDescription}
+                onChange={(e) => setDatasetDescription(e.target.value)}
+                className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-location" className="text-right">
-                Location
-              </Label>
-              <Input 
-                id="edit-location" 
-                value={location} 
-                onChange={(e) => setLocation(e.target.value)} 
-                className="col-span-3" 
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-date" className="text-right">
-                Date
-              </Label>
-              <Input 
-                id="edit-date" 
-                type="date" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-                className="col-span-3" 
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="edit-thumbnail" className="text-right">
-                Thumbnail
-              </Label>
-              <div className="col-span-3">
-                <Input 
-                  id="edit-thumbnail" 
-                  type="file" 
-                  onChange={handleFileChange} 
-                  className="mb-2" 
-                  accept="image/*"
-                />
-                {thumbnailPreview && (
-                  <Image 
-                    src={thumbnailPreview} 
-                    alt="Thumbnail preview" 
-                    width={100} 
-                    height={100} 
-                    className="object-cover rounded"
+              <Label className="text-right">Image</Label>
+              <div
+                {...getRootProps()}
+                className="col-span-3 border-2 border-dashed border-gray-300 rounded-md p-4 text-center cursor-pointer hover:border-gray-400 transition-colors"
+              >
+                <input {...getInputProps()} />
+                <div className="relative w-full h-32">
+                  <Image
+                    src={preview}
+                    alt="Dataset preview"
+                    fill
+                    className="object-cover rounded-md"
                   />
-                )}
+                </div>
+                <p className="text-sm text-gray-500 mt-2">
+                  {isDragActive
+                    ? "Drop the image here"
+                    : "Drag 'n' drop a new image here, or click to select one"}
+                </p>
               </div>
             </div>
           </div>

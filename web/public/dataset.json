@@ -1,47 +1,50 @@
 [
     {
-        "id": 1,
-        "name": "Coral Reef Survey 2023",
-        "species": "Various Coral Species",
-        "location": "Great Barrier Reef",
-        "date": "2023-06-15",
-        "access": "Full",
-        "thumbnail": "/images_1.jpg"
+      "id": 1,
+      "title": "Maldives Tube Sponges",
+      "description": "Collection of tube sponges from the Maldives",
+      "items": 126,
+      "createdDate": "12th October 2024",
+      "image": "/sponges/images_1.jpg"
     },
     {
-        "id": 2,
-        "name": "Rainforest Biodiversity Study",
-        "species": "Amazonian Flora",
-        "location": "Amazon Rainforest",
-        "date": "2023-08-22",
-        "access": "View",
-        "thumbnail": "/images_2.jpg"
+      "id": 2,
+      "title": "Caribbean Barrel Sponges",
+      "description": "Barrel sponges found in the Caribbean Sea",
+      "items": 98,
+      "createdDate": "15th October 2024",
+      "image": "/sponges/images_2.jpg"
     },
     {
-        "id": 3,
-        "name": "Arctic Ice Core Samples",
-        "species": "N/A",
-        "location": "Greenland",
-        "date": "2023-03-10",
-        "access": "Full",
-        "thumbnail": "/images_3.jpg"
+      "id": 3,
+      "title": "Mediterranean Sea Sponges",
+      "description": "Various sponge species from the Mediterranean",
+      "items": 157,
+      "createdDate": "18th October 2024",
+      "image": "/sponges/images_3.jpg"
     },
     {
         "id": 4,
-        "name": "Savanna Mammal Migration Patterns",
-        "species": "Various Mammals",
-        "location": "Serengeti",
-        "date": "2023-09-05",
-        "access": "Full",
-        "thumbnail": "/images_4.jpg"
-    },
-    {
+        "title": "Great Barrier Reef Corals",
+        "description": "A diverse collection of coral species from the Great Barrier Reef",
+        "items": 250,
+        "createdDate": "22nd October 2024",
+        "image": "/sponges/images_4.jpg"
+      },
+      {
         "id": 5,
-        "name": "Deep Sea Vent Ecosystem",
-        "species": "Hydrothermal Vent Organisms",
-        "location": "Pacific Ocean",
-        "date": "2023-11-30",
-        "access": "View",
-        "thumbnail": "/images_5.jpg"
-    }
-]
+        "title": "Red Sea Fish",
+        "description": "A variety of colorful fish species found in the Red Sea",
+        "items": 180,
+        "createdDate": "25th October 2024",
+        "image": "/sponges/images_5.jpg"
+      },
+      {
+        "id": 6,
+        "title": "Pacific Ocean Mollusks",
+        "description": "A collection of mollusks from the Pacific Ocean, including clams, oysters, and snails",
+        "items": 135,
+        "createdDate": "28th October 2024",
+        "image": "/sponges/images_6.jpg"
+      }
+  ]
