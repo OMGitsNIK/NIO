@@ -451,13 +451,13 @@ def process_image(request):
                 class_ids = results[0].boxes.cls.cpu().numpy().astype(int)
                 counts = {
                     "tentacles": len([cls_id for cls_id in class_ids if cls_id == 0]),
-                    "buds": len([cls_id for cls_id in class_ids if cls_id == 1]),
+                    "osculum": len([cls_id for cls_id in class_ids if cls_id == 1]),
                 }
             else:
-                counts = {"tentacles": 0, "buds": 0}
+                counts = {"tentacles": 0, "osculum": 0}
 
         except Exception as e:
-            counts = {"tentacles": 0, "buds": 0}
+            counts = {"tentacles": 0, "osculum": 0}
 
         # Feature Extraction
         laplace = cv2.Laplacian(inpainted, cv2.CV_64F).var()
