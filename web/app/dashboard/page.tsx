@@ -30,21 +30,15 @@ export default function DashboardPage() {
     fetchData();
   }, []);
 
-  const addDataset = (newDataset: Omit<Dataset, "id">) => {
-    axios.post(`${CONFIG.SERVER_URL}/v1/dataset`, newDataset)
-    setDatasets(prevDatasets => [
-      ...prevDatasets,
-      { ...newDataset, id: prevDatasets.length + 1 }
-    ])
-  }
+ 
 
   const editDataset = (id: number, updatedDataset: Partial<Dataset>) => {
-    setDatasets(prevDatasets =>
-      prevDatasets.map(dataset =>
-        dataset.id === id ? { ...dataset, ...updatedDataset } : dataset
-      )
-    )
-  }
+			setDatasets((prevDatasets) =>
+				prevDatasets.map((dataset) =>
+					dataset.id === id ? { ...dataset, ...updatedDataset } : dataset,
+				),
+			);
+		};
 
   const deleteDataset = (id:number) => {
     setDatasets(prevDatasets =>
@@ -53,18 +47,15 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="flex h-screen overflow-hidden bg-white">
-      <SidebarComponent onAddDataset={addDataset} />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <DashboardHeader />
-        <main className="flex-1 overflow-auto p-6 md:w-[75%] w-full">
-          <DatasetView 
-          datasets={datasets} 
-          onEditDataset={editDataset}
-          onDeleteDataset={deleteDataset}
-           />
-        </main>
-      </div>
-    </div>
-  )
+			<div className="flex flex-col flex-1 overflow-hidden">
+				<DashboardHeader />
+				<main className="flex-1 overflow-auto p-6 md:w-[75%] w-full">
+					<DatasetView
+						datasets={datasets}
+						onEditDataset={editDataset}
+						onDeleteDataset={deleteDataset}
+					/>
+				</main>
+			</div>
+		);
 }

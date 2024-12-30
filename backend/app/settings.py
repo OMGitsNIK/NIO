@@ -28,7 +28,7 @@ SECRET_KEY = "django-insecure-556g(vz-dsh_a^m+3f8!odz!5h@h!wkawexdyvhpi(bb@-re2*
 DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
 CORS_ALLOW_ALL_ORIGINS: True
 
 # Application definition
@@ -79,7 +79,11 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-NEXTAUTH_SECRET="3324t4rhf3wergewfdsgwacvsdfawtygvvychagsdvyuh"
+NEXTAUTH_SECRET = """En1gm0gcay1Uw3YZIr5yWgFNkLJaZqm248zR0B3wi4+PunxfK7NQQPlgImWQEGAV
+Hfnl427/I2sLZMKBngiTVya3OMPL7XIo/U7vAcXSAoYzPelYR1G8TARu4z0Em0VE
+HqmpRhDneFrPSH0gujLjlG/UK0EnT7c4DxiE7o/m30M6fbUkVZ28HdoHsYqYbwoF
+BYjJqKquuGa8eqUTcRoypbm2qnGy3Ot0rGgEgTBAPTf+5+pmSYsEhC9wTla4DXvl
+0DWrUagvl40="""
 BCRYPT_SALT = bcrypt.gensalt()
 
 DATABASES = {

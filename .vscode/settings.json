@@ -1,7 +1,7 @@
 {
   "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  },
+			"editor.defaultFormatter": "biomejs.biome"
+		},
   "deno.enablePaths": [
     "supabase/functions"
   ],

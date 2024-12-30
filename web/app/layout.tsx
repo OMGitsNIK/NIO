@@ -3,6 +3,7 @@ import {Rubik} from 'next/font/google'
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { DashboardLayout } from "@/components/Sidebar";
+import ClientSessionProvider from "@/components/client-session-provider";
 
 
 
@@ -24,13 +25,17 @@ export default function RootLayout({
 	children: React.ReactNode;
 }>) {
 	return (
-    <html lang="en">
-      <body>
-          <main className={cn("pl-[var(--sidebar-width)] transition-[padding] duration-300 ease-in-out",rubik.className)}>
-            {children}
-          </main>
-        
-      </body>
-    </html>
-  );
+		<html lang="en">
+			<body>
+				<main
+					className={cn(
+						"pl-[var(--sidebar-width)] transition-[padding] duration-300 ease-in-out",
+						rubik.className,
+					)}
+				>
+					<ClientSessionProvider>{children}</ClientSessionProvider>
+				</main>
+			</body>
+		</html>
+	);
 }
