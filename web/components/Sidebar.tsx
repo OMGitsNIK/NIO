@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Layout, Map, Settings, Menu, X } from "lucide-react";
+import { Layout, Map, Settings, Menu, X, ChevronLast, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewDatasetModal } from "./NewDatasetModal";
 
@@ -49,10 +49,10 @@ export function SidebarComponent({ onAddDataset }: SidebarProps) {
       >
         {/* Toggle Button */}
         <button
-          className="hidden md:block p-2 rounded-full absolute right-1  bg-white text-black border shadow m-4"
+          className="hidden size-8  md:flex items-center justify-center p-2 rounded-full absolute -right-4 top-2  bg-white text-black border shadow "
           onClick={() => setIsMinimized(!isMinimized)}
         >
-          {isMinimized ? ">" : "<"}
+        <ChevronLeft className={cn(isMinimized?"rotate-180":"rotate-0","transition-transform size-4")}/>
         </button>
 
         {/* Logo */}
