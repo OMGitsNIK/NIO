@@ -1,9 +1,32 @@
-
+'use client'
+import { signIn } from "next-auth/react"
 import Link from "next/link"
 import Image from "next/image"
+import React, { useState } from "react"
+import { useRouter } from "next/navigation"
 
 export default function LoginPage() {
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError(null)
+
+    const result = await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })
+
+    if (result?.error) {
+      setError(result.error)
+    } else {
+      router.push("/")
+    }
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -21,7 +44,7 @@ export default function LoginPage() {
             <p className="text-sm text-gray-600">Great you see you back here</p>
           </div>
 
-          <form className="mt-8 space-y-6">
+          <form onSubmit={handleSubmit} className="mt-8 space-y-6">
             <div className="space-y-4">
               <div>
                 <label htmlFor="email" className="block text-sm font-medium">
@@ -31,6 +54,8 @@ export default function LoginPage() {
                   id="email"
                   name="email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
@@ -41,22 +66,20 @@ export default function LoginPage() {
                   <label htmlFor="password" className="block text-sm font-medium">
                     Password
                   </label>
-                  <Link
-                    href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-500"
-                  >
-                    Forgot?
-                  </Link>
                 </div>
                 <input
                   id="password"
                   name="password"
                   type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
             </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
 
             <button
               type="submit"
@@ -87,4 +110,3 @@ export default function LoginPage() {
     </div>
   )
 }
-

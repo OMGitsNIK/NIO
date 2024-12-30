@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 
 from pathlib import Path
 
+import bcrypt
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -77,6 +79,8 @@ WSGI_APPLICATION = "app.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
+NEXTAUTH_SECRET="3324t4rhf3wergewfdsgwacvsdfawtygvvychagsdvyuh"
+BCRYPT_SALT = bcrypt.gensalt()
 
 DATABASES = {
     "default": {

@@ -66,7 +66,7 @@ export function SidebarComponent({ onAddDataset }: SidebarProps) {
         )}
 
         {/* New Dataset Modal */}
-        <div className="p-2 justify-center items-center">
+        <div className="">
           {!isMinimized && <NewDatasetModal onAddDataset={onAddDataset} />}
         </div>
 

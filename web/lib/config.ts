@@ -1,3 +1,4 @@
-export const CONFIG={
-SERVER_URL:'http://localhost:8000'
-}
+export const CONFIG = {
+    SERVER_URL: process.env.DJANGO_API_URL || 'http://localhost:8000',
+  };
+  

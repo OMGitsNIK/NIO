@@ -21,7 +21,6 @@ from . import models
 
 
 
-
 @csrf_exempt
 # @cache_page(60 * 15)
 def dataset(request):
@@ -77,7 +76,8 @@ def dataset(request):
             ic(request.body)
             data = json.loads(request.body)
             ic(data)
-            # ic(request.POST.get("user_id"))
+            # ic 
+            # (request.POST.get("user_id"))
 
             user = get_object_or_404(models.User, id=data.get("userId"))
 
