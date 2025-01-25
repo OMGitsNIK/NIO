@@ -9,6 +9,8 @@ class User(models.Model):
     name = models.TextField()
     email = models.EmailField(unique=True, blank=False, null=False)
     roles = models.ManyToManyField("Role", related_name="users", blank=True)
+    password=models.TextField()
+    # last_seen=models.DateField( auto_now=True, auto_now_add=True)
 
 
 class Role(models.Model):
@@ -16,8 +18,9 @@ class Role(models.Model):
 
 
 class Location(models.Model):
-    latitude = models.FloatField()
-    longitude = models.FloatField()
+    latitude = models.FloatField(default=0)
+    longitude = models.FloatField(default=0)
+    altitude = models.FloatField(default=0)
     title = models.TextField(default="")
     description = models.TextField(default="")
 
@@ -37,29 +40,39 @@ class Pipeline(models.Model):
 
 class Bucket(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    blob = models.FileField(upload_to="bucket/")
+    file = models.FileField(upload_to="public/")
     name = models.TextField()
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_on=models.DateTimeField(default=timezone.now)
 
 
 class Dataset(models.Model):
+    id=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     name = models.TextField()
     visibility = models.CharField(
         max_length=7, choices=[("public", "Public"), ("private", "Private")]
     )
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(default=timezone.now)
+    description = models.TextField(default="")
 
 
 class Snapshot(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    media_type = models.CharField(
-        max_length=7, choices=[("image", "Image"), ("video", "Video")]
-    )
     media = models.ForeignKey(Bucket, on_delete=models.CASCADE)
-    location = models.JSONField()
-    time = models.DateTimeField(default=timezone.now)
+    location = models.ForeignKey(Location, on_delete=models.CASCADE)
+    created_on = models.DateTimeField(default=timezone.now)
     version = models.PositiveIntegerField(default=0)
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
+
+class DatasetBridge(models.Model):
+    id=models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
+    version = models.PositiveIntegerField(default=0)
+
+class DatasetSnapshotBridge(models.Model):
+    dataset_bridge = models.ForeignKey(DatasetBridge, on_delete=models.CASCADE)
+    snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
 
 
 class Filter(models.Model):
@@ -67,11 +80,6 @@ class Filter(models.Model):
     output = models.ForeignKey(Bucket, on_delete=models.CASCADE)
     name = models.TextField()
     parameters = models.JSONField()
-
-
-class DatasetBridge(models.Model):
-    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE)
-    version = models.PositiveIntegerField(default=0)
 
 
 class Operation(models.Model):
@@ -92,9 +100,6 @@ class Operation(models.Model):
     reference = models.UUIDField(editable=True)
 
 
-class DatasetSnapshotBridge(models.Model):
-    dataset_bridge = models.ForeignKey(DatasetBridge, on_delete=models.CASCADE)
-    snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
 
 
 class NNModel(models.Model):
