@@ -53,8 +53,7 @@ export default function AnalyzePage() {
     return (
       <div className="flex h-screen overflow-hidden bg-white">
         <SidebarComponent  />
-        <div className="flex flex-col flex-1 overflow-hidden">
-          <DashboardHeader />
+    
           <main className="flex-1 overflow-auto bg-black/5">
             {/* Status Bar */}
             <div className="p-4 border-b bg-background">
@@ -105,7 +104,7 @@ export default function AnalyzePage() {
               </div>
             </div>
           </main>
-        </div>
+       
         <AnalysisSidebar file={file} />
       </div>
     )
@@ -114,8 +113,7 @@ export default function AnalyzePage() {
   return (
     <div className="flex h-screen overflow-hidden bg-white">
       <SidebarComponent />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <DashboardHeader />
+  
         <main className="flex-1 overflow-auto">
           <div className="flex items-center justify-center min-h-full p-6">
             <div className="w-full max-w-2xl mx-auto text-center">
@@ -171,7 +169,7 @@ export default function AnalyzePage() {
             </div>
           </div>
         </main> 
-      </div>
+     
     </div>
   )
 }

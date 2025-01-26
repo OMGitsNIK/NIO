@@ -28,7 +28,7 @@ export function SidebarComponent() {
 
 	const navItems = [
 		{ href: "/dashboard", icon: Layout, label: "Dashboard" },
-		{ href: "/map", icon: Map, label: "Map" },
+		// { href: "/map", icon: Map, label: "Map" },
 		{ href: "/analyze", icon: Settings, label: "Analyze" },
 	];
 
@@ -36,7 +36,7 @@ export function SidebarComponent() {
 		<>
 			{/* Hamburger Icon for Smaller Screens */}
 			<button
-				className={`fixed top-4 md:hidden transition-transform duration-300 z-50 p-2 rounded-full bg-white text-black border shadow ${isSidebarOpen ? "left-64" : "left-4"}`}
+				className={`fixed top-4 md:hidden  duration-300 z-50 p-2 rounded-full bg-white text-black border shadow ${isSidebarOpen ? "left-64" : "left-4"}`}
 				onClick={() => setIsSidebarOpen(!isSidebarOpen)}
 			>
 				{isSidebarOpen ? (
@@ -49,7 +49,7 @@ export function SidebarComponent() {
 			{/* Sidebar */}
 			<aside
 				className={cn(
-					"fixed top-0  left-0 z-40 h-full bg-white text-black border-r transition-all duration-300 md:relative md:translate-x-0",
+					"fixed top-0  left-0 z-40 h-full bg-white text-black border-r  duration-300 md:relative md:translate-x-0",
 					isSidebarOpen
 						? "translate-x-0"
 						: "-translate-x-full md:translate-x-0",
@@ -64,7 +64,7 @@ export function SidebarComponent() {
 					<ChevronLeft
 						className={cn(
 							isMinimized ? "rotate-180" : "rotate-0",
-							"transition-transform size-4",
+							" size-4",
 						)}
 					/>
 				</button>

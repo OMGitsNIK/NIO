@@ -1,4 +1,3 @@
-from re import S
 import jwt
 from django.http import JsonResponse
 from django.conf import settings
@@ -6,15 +5,8 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 from .forms import AuthForm
 from v1.models import User
-from django.contrib.auth.hashers import make_password
 import bcrypt
-from django.http import JsonResponse
-from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from .forms import AuthForm
-from v1.models import User
-import jwt
-import json
+
 
 
 @csrf_exempt

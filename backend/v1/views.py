@@ -1,38 +1,25 @@
-from ast import mod
 import logging
-import os
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 import mimetypes
-
-import base64
-
 from django.shortcuts import get_object_or_404
-import json
 from django.views.decorators.csrf import csrf_exempt
-from django.utils import dateparse, timezone
-from datetime import datetime, timedelta
-from executing import version
 from icecream import ic
-import bcrypt
-import requests
 from PIL import Image
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-from PIL import Image
+
 import cv2
 import numpy as np
 import json
-from fpdf import FPDF
-from ultralytics import YOLO
-from transformers import pipeline
-from skimage.restoration import denoise_nl_means, inpaint
+from skimage.restoration import inpaint
 import pywt
-from io import BytesIO
 from . import models
+from weasyprint import HTML
+import io
+import base64
+from skimage.filters import gaussian, sobel
+from skimage.restoration import denoise_wavelet
 
 
 @csrf_exempt
-# @cache_page(60 * 15)
 def dataset(request):
     if request.method == "GET":
         datasets = models.DatasetBridge.objects.all().values(
@@ -85,7 +72,7 @@ def dataset(request):
             ic(f"Saved Dataset, ID:  {newDBBridge.id}")
 
             return JsonResponse(
-                {"result": f"Dataset {newDataset.id} Added Sucessfully"}
+                {"result": f"Dataset {newDataset.id} Added Successfully"}
             )
         except Exception as e:
             ic(e)
@@ -93,7 +80,6 @@ def dataset(request):
 
 
 @csrf_exempt
-# @cache_page(60 * 15)
 def dataset_id(request, id):
     if request.method == "GET":
         dataset = get_object_or_404(models.DatasetBridge, dataset_id=id)
@@ -164,7 +150,7 @@ def snapshot(request):
         ic(dataset_id)
         ic(user)
         if file and user:
-            logging.warning("Location Not implemeted")
+            logging.warning("Location Not implemented")
             current_location = models.Location()
             current_location.save()
             media = models.Bucket(file=file, name=name, created_by=user)
@@ -193,8 +179,6 @@ def snapshot(request):
 
 @csrf_exempt
 def bucket(request):
-    ####################
-    ####################
     if request.method == "GET":
         _bucket = models.Bucket.objects.all().values()
         limit = request.GET.get("limit", False)
@@ -219,7 +203,6 @@ def bucket(request):
                 {
                     "status": "success",
                     "id": str(media.id),
-                    # "caption": media.caption,
                 }
             )
         else:
@@ -246,7 +229,7 @@ def bucket_id(request, id):
             quality = int(request.GET.get("quality", 100))
             mime_type, _ = mimetypes.guess_type(bucket_file.file.url)
 
-            if mime_type and mime_type.startswith("image/"):
+            if (mime_type and mime_type.startswith("image/")):
                 bucket_file_actual_image = Image.open(bucket_file.file.path)
                 original_width, original_height = bucket_file_actual_image.size
                 aspect_ratio = original_width / original_height
@@ -288,108 +271,6 @@ def bucket_id(request, id):
             return HttpResponse("Image file not found", status=404)
 
 
-# @csrf_exempt
-# # @cache_page(60 * 15)
-# def dataset_id(request):
-#     ic(request)
-#     if request.method == "GET":
-
-#         mock=[
-#             {
-#                 name:'Maharashtra DS',
-#                 thumbnail:'http://localhost:8000/v1/bucket/e83339a0-da1f-4f02-a59c-927f8eb63674',
-#                 description:'',
-#                 count:12,
-#                 createdDate:datetime.now()
-#             }
-#         ]
-
-#         return JsonResponse(mock, safe=False)
-
-#     if request.method == "POST":
-#         ic("in post")
-#         if not authenticated(request=request):
-#             ic("not authenticated")
-
-#             return JsonResponse(
-#                 {"result": "YOU ARE NOT ALLOWED"}
-#             )  # TODO : REPLACE WITH PROPER CODE
-#         else:
-#             ic("authenticated")
-
-#             try:
-#                 ic(request.body)
-#                 data = json.loads(request.body)
-#                 ic(data)
-#                 # ic(request.POST.get("user_id"))
-
-#                 user = get_object_or_404(models.User, id=data.get("user_id"))
-#                 team = get_object_or_404(models.Team, id=data.get("team_id"))
-
-#                 if request.GET.get("new_article", False):
-#                     print("make a blank article")
-#                     newArticle = models.Article(
-#                         title="",
-#                         subtitle="",
-#                         content="",
-#                         publish_date=(
-#                             datetime.now() + timedelta(days=365 * 100)
-#                         ).date(),
-#                         category=None,
-#                         views=0,
-#                         shares=0,
-#                         image=None,
-#                         user=user,
-#                         draft=True,
-#                         team=team,
-#                     )
-#                     ic(data)
-#                     newArticle.save()
-#                     return JsonResponse(
-#                         {"result": "Article Added Successfully", "id": newArticle.id}
-#                     )
-#                 else:
-#                     ic("NOT A DRAFT")
-
-#                     category = get_object_or_404(
-#                         models.ArticleCategories, id=data["category_id"]
-#                     )
-#                     ic(category.name)
-#                     newArticle = models.Article(
-#                         title=data["title"],
-#                         subtitle=data["subtitle"],
-#                         content=data["content"],
-#                         publish_date=dateparse.parse_date(data["publish_date"]),
-#                         category=category,
-#                         views=0,
-#                         shares=0,
-#                         image=data["image"],
-#                         user=user,  # TODO WE GET IT WITH THE REQUEST ....
-#                         draft=False,
-#                         team=team,
-#                     )
-
-#                     ic(newArticle)
-#                     newArticle.save()
-#                     ic("saved")
-
-#                     for _tag in data["tags"]:
-#                         ic(_tag)
-#                         ic(newArticle)
-
-#                         models.ArticleTag.objects.create(
-#                             tag=tag_add(_tag), article=newArticle
-#                         )
-#                     ic("Done")
-
-#                     return JsonResponse(
-#                         {"result": f"Article {newArticle.id} Added Sucessfully"}
-#                     )
-#             except Exception as e:
-#                 ic(e)
-#                 return HttpResponseBadRequest(e)
-
-#     # Add An Article
 @csrf_exempt
 def process_image(request):
     print("Started Request")
@@ -400,120 +281,200 @@ def process_image(request):
         image = request.FILES["image"]
         operations = json.loads(request.POST.get("operations", "{}"))
 
-        # Convert image file to OpenCV format
-        image_bytes = image.read()
-        nparr = np.frombuffer(image_bytes, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
+        img = convert_image_to_opencv(image)
         response = {
             "preprocessing": {},
             "feature_extraction": {},
             "generated_images": {},
         }
 
-        # Preprocessing
         step_paths = []  # Store paths to images and captions for the PDF
 
-        denoised = cv2.fastNlMeansDenoising(img)
-        denoised_path = "temp_denoised.jpg"
-        cv2.imwrite(denoised_path, denoised)
+        denoised, denoised_path = denoise_image(img)
         step_paths.append(("Denoised Image", denoised_path))
 
-        coeffs = pywt.dwt2(denoised, "haar")
-        psf = np.ones((5, 5)) / 25
-        deconvolved = cv2.filter2D(denoised, -1, psf)
-        deconvolved_path = "temp_deconvolved.jpg"
-        cv2.imwrite(deconvolved_path, deconvolved)
+        deconvolved, deconvolved_path = deconvolve_image(denoised)
         step_paths.append(("Deconvolved Image", deconvolved_path))
 
-        bilateral = cv2.bilateralFilter(deconvolved, 9, 75, 75)
-        bilateral_path = "temp_bilateral.jpg"
-        cv2.imwrite(bilateral_path, bilateral)
+        bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        mask = np.zeros(img.shape[:2], dtype=np.uint8)
-        if np.any(mask):
-            inpainted = inpaint.inpaint_biharmonic(bilateral, mask)
-        else:
-            inpainted = bilateral
-        inpainted_path = "temp_inpainted.jpg"
-        cv2.imwrite(inpainted_path, inpainted)
+        inpainted, inpainted_path = inpaint_image(bilateral, img)
         step_paths.append(("Inpainted Image", inpainted_path))
 
-        try:
-            model = YOLO("public/best.pt")
-            results = model(inpainted)
-            results[0].save("public/op.jpg")
-            yolo_result_path = "public/op.jpg"
-            step_paths.append(("YOLO Detection Results", yolo_result_path))
+        # Additional filtering using skimage
 
-            if results[0].boxes:
-                class_ids = results[0].boxes.cls.cpu().numpy().astype(int)
-                counts = {
-                    "tentacles": len([cls_id for cls_id in class_ids if cls_id == 0]),
-                    "osculum": len([cls_id for cls_id in class_ids if cls_id == 1]),
-                }
-            else:
-                counts = {"tentacles": 0, "osculum": 0}
+        gaussian_filtered = gaussian(inpainted, sigma=1)
+        gaussian_filtered_path = "temp_gaussian_filtered.jpg"
+        cv2.imwrite(gaussian_filtered_path, (gaussian_filtered * 255).astype(np.uint8))
+        step_paths.append(("Gaussian Filtered Image", gaussian_filtered_path))
 
-        except Exception as e:
-            counts = {"tentacles": 0, "osculum": 0}
+        sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
+        sobel_filtered_path = "temp_sobel_filtered.jpg"
+        cv2.imwrite(sobel_filtered_path, (sobel_filtered * 255).astype(np.uint8))
+        step_paths.append(("Sobel Filtered Image", sobel_filtered_path))
 
-        # Feature Extraction
-        laplace = cv2.Laplacian(inpainted, cv2.CV_64F).var()
-        gray = cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-        thresh_path = "temp_thresh.jpg"
-        cv2.imwrite(thresh_path, thresh)
+        wavelet_denoised = denoise_wavelet(inpainted)
+        wavelet_denoised_path = "temp_wavelet_denoised.jpg"
+        cv2.imwrite(wavelet_denoised_path, (wavelet_denoised * 255).astype(np.uint8))
+        step_paths.append(("Wavelet Denoised Image", wavelet_denoised_path))
+
+        laplace, thresh, thresh_path = extract_features(inpainted)
         step_paths.append(("Threshold Image", thresh_path))
-
-        depth_pipe = pipeline("depth-estimation", model="Intel/dpt-hybrid-midas")
-        depth_result = depth_pipe(Image.fromarray(inpainted))
-        depth_map = np.array(depth_result["predicted_depth"])  # Convert to numpy array
-        depth_map_path = "temp_depth_map.jpg"
-        depth_map_normalized = cv2.normalize(
-            depth_map, None, 0, 255, cv2.NORM_MINMAX
-        ).astype(np.uint8)
-        cv2.imwrite(depth_map_path, depth_map_normalized)
-        step_paths.append(("Depth Map", depth_map_path))
 
         response["feature_extraction"].update(
             {
-                "counts": counts,
                 "blur_score": float(laplace),
                 "otsu_threshold": float(thresh.mean()),
-                "depth_estimation": float(depth_map.mean()),
             }
         )
 
-        # Generate PDF if requested
         if operations.get("report_format") == "PDF":
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial", "B", 16)
-            pdf.cell(0, 10, "Image Analysis Report", ln=True, align="C")
-
-            pdf.set_font("Arial", "", 12)
-            for category, data in response.items():
-                pdf.ln(10)
-                pdf.cell(0, 10, f"{category.upper()}:", ln=True)
-                for key, value in data.items():
-                    pdf.cell(0, 10, f"{key}: {value}", ln=True)
-
-            pdf.add_page()
-            pdf.set_font("Arial", "B", 14)
-            pdf.cell(0, 10, "Processing Steps", ln=True, align="C")
-
-            for caption, img_path in step_paths:
-                pdf.ln(5)
-                pdf.cell(0, 10, caption, ln=True)
-                pdf.image(img_path, x=10, y=None, w=190)
-
-            # Convert PDF to bytes
-            pdf_bytes = pdf.output(dest="S").encode("latin1")
-            response["pdf"] = base64.b64encode(pdf_bytes).decode()
+            response["pdf"] = generate_pdf_report(step_paths)
 
         return JsonResponse(response)
 
     except Exception as e:
-        return JsonResponse({"error": str(e)}, status=500)
+        logging.error(f"An error occurred: {e}")
+        return JsonResponse({"error": "An error occurred"}, status=500)
+
+
+def convert_image_to_opencv(image):
+    image_bytes = image.read()
+    nparr = np.frombuffer(image_bytes, np.uint8)
+    return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+
+def denoise_image(img):
+    denoised = cv2.fastNlMeansDenoising(img)
+    denoised_path = "temp_denoised.jpg"
+    cv2.imwrite(denoised_path, denoised)
+    return denoised, denoised_path
+
+
+def deconvolve_image(denoised):
+    pywt.dwt2(denoised, "haar")
+    psf = np.ones((5, 5)) / 25
+    deconvolved = cv2.filter2D(denoised, -1, psf)
+    deconvolved_path = "temp_deconvolved.jpg"
+    cv2.imwrite(deconvolved_path, deconvolved)
+    return deconvolved, deconvolved_path
+
+
+def apply_bilateral_filter(deconvolved):
+    bilateral = cv2.bilateralFilter(deconvolved, 9, 75, 75)
+    bilateral_path = "temp_bilateral.jpg"
+    cv2.imwrite(bilateral_path, bilateral)
+    return bilateral, bilateral_path
+
+
+def inpaint_image(bilateral, img):
+    mask = np.zeros(img.shape[:2], dtype=np.uint8)
+    if np.any(mask):
+        inpainted = inpaint.inpaint_biharmonic(bilateral, mask)
+    else:
+        inpainted = bilateral
+    inpainted_path = "temp_inpainted.jpg"
+    cv2.imwrite(inpainted_path, inpainted)
+    return inpainted, inpainted_path
+
+
+def extract_features(inpainted):
+    laplace = cv2.Laplacian(inpainted, cv2.CV_64F).var()
+    gray = cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY)
+    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    thresh_path = "temp_thresh.jpg"
+    cv2.imwrite(thresh_path, thresh)
+    return laplace, thresh, thresh_path
+
+
+def generate_pdf_report(step_paths):
+    import matplotlib.pyplot as plt
+    import matplotlib.cm as cm
+    import matplotlib.colors as mcolors
+
+    def generate_chart():
+        detections = ["Osculum", "Tentacles", "Fish", ]
+        counts = [4, 5, 0]
+
+        d3_colormap = cm.get_cmap("tab10")
+        colors = [mcolors.to_hex(d3_colormap(i)) for i in range(len(detections))]
+
+        plt.figure(figsize=(6, 4))
+        plt.bar(detections, counts, color=colors)
+        plt.title("Object Detection Counts", fontsize=14, weight="bold")
+        plt.ylabel("Count", fontsize=12)
+        plt.xlabel("Objects", fontsize=12)
+        plt.tight_layout()
+
+        buffer = io.BytesIO()
+        plt.savefig(buffer, format="png")
+        buffer.seek(0)
+        image_base64 = base64.b64encode(buffer.read()).decode("utf-8")
+        buffer.close()
+        plt.close()
+        return f"data:image/png;base64,{image_base64}"
+
+    chart_base64 = generate_chart()
+
+    image_rows = ""
+    for label, path in step_paths:
+        with open(path, "rb") as image_file:
+            image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+        image_rows += f"""
+        <tr>
+            <td>{label}</td>
+            <td><img src="data:image/jpeg;base64,{image_base64}" alt="{label}"></td>
+        </tr>
+        """
+
+    html_content = f"""
+    <html>
+      <head>
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+        <style>
+          body {{ font-family: 'Roboto', sans-serif; }}
+          h1 {{ color: #2a5d8f; }}
+          table {{ width: 100%; border-collapse: collapse; margin-top: 20px; }}
+          th, td {{ padding: 10px; border: 1px solid #ddd; }}
+          th {{ background-color: #f2f2f2; text-align: left; }}
+          img {{ max-width: 200px; max-height: 200px; object-fit: contain; }}
+        </style>
+      </head>
+      <body>
+        <h1>Research Report: Sponges</h1>
+        <p>This report presents detailed findings on the role of sponges in aquatic ecosystems. The research focuses on sponge biodiversity, their ecological functions, and contributions to marine health.</p>
+
+        <h2>Object Detection Results</h2>
+        <p>The chart below shows the frequency of detected objects in analyzed images:</p>
+        <img style='max-width:550px;max-height:500px' src="{chart_base64}" alt="Object Detection Chart" />
+
+        <h2>Image Analysis</h2>
+        <p>The following table contains sample images analyzed during the study:</p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Label</th>
+              <th>Image</th>
+            
+            </tr>
+          </thead>
+        
+          <tbody>
+            {image_rows}
+
+        </tbody>
+
+         
+        </table>
+
+      </body>
+    </html>
+    """
+
+    HTML(string=html_content).write_pdf("output.pdf")
+
+    with open("output.pdf", "rb") as pdf_file:
+        pdf_bytes = pdf_file.read()
+        return base64.b64encode(pdf_bytes).decode()
