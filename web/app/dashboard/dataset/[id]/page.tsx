@@ -30,7 +30,7 @@ export default function Page({ params }: { params: { id: string } }) {
 	if (loading) return <p>Loading...</p>;
 
 	return (
-		<div className="p-8">
+		<div className="p-8 md:mt-0 mt-16">
 			<h1 className="text-3xl">{data.name}</h1>
 			<p className="">{data.description}</p>
 			<p className="text-xs">
