@@ -15,15 +15,8 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import type { Dataset } from "@/types/db";
 
-interface Dataset {
-  id: number
-  title: string
-  description: string
-  items: number
-  createdDate: string
-  image: string
-}
 
 interface EditDatasetModalProps {
   children: React.ReactNode
