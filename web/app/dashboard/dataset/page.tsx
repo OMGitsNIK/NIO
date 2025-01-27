@@ -6,8 +6,7 @@ import Link from "next/link"
 import Image from "next/image"
 import axios from "axios" // Import axios for making API requests
 import { CONFIG } from "@/lib/config"
-import { DashboardHeader } from "@/components/DashboardHeader"
-import { SidebarComponent } from "@/components/Sidebar"
+
 
 export default function DatasetImages() {
     const [results, setResults] = useState<null | Array<{
@@ -34,8 +33,7 @@ export default function DatasetImages() {
       }, []);
     
   return (
-			<div className="flex-1 flex flex-col overflow-hidden">
-				<DashboardHeader />
+				
 				<main className="flex-1 overflow-y-auto p-4 md:w-[80%] w-full">
 					<h2 className="text-black text-xl font-semibold mb-4">Sponges</h2>
 					<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -45,6 +43,7 @@ export default function DatasetImages() {
 								key={sponge.id}
 								className="aspect-square w-full block relative cursor-pointer   "
 							>
+								
 								<Image
 									src={`${CONFIG.SERVER_URL}/v1/sponge/image/${sponge.id}/`}
 									alt=""
@@ -61,6 +60,6 @@ export default function DatasetImages() {
 						))}
 					</div>
 				</main>
-			</div>
+			
 		);
 }

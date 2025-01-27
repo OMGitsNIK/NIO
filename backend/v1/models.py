@@ -9,8 +9,9 @@ class User(models.Model):
     name = models.TextField()
     email = models.EmailField(unique=True, blank=False, null=False)
     roles = models.ManyToManyField("Role", related_name="users", blank=True)
-    password=models.TextField()
-    # last_seen=models.DateField( auto_now=True, auto_now_add=True)
+    password = models.TextField()
+    created_at = models.DateTimeField(default=timezone.now)
+    last_seen = models.DateTimeField(auto_now=True)
 
 
 class Role(models.Model):

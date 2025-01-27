@@ -47,8 +47,6 @@ export default function DashboardPage() {
   }
 
   return (
-			<div className="flex flex-col flex-1 overflow-hidden">
-				<DashboardHeader />
 				<main className="flex-1 overflow-auto p-6 md:w-[75%] w-full">
 					<DatasetView
 						datasets={datasets}
@@ -56,6 +54,5 @@ export default function DashboardPage() {
 						onDeleteDataset={deleteDataset}
 					/>
 				</main>
-			</div>
 		);
 }

@@ -1,7 +1,35 @@
-import Link from "next/link"
-import Image from "next/image"
+'use client'
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import axiosInstance from "@/lib/axios";
+import { Button } from "@/components/ui/button";
+import { signIn } from "next-auth/react";
 
 export default function SignUpPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleCreateAccount = async () => {
+    try {
+      const response = await axiosInstance.post("/api/register/", {
+							email,
+							password,
+						});
+						console.log(response.data);
+  await signIn("credentials", {
+      redirect: false,
+      email,
+      password,
+    })      
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+
+
+
 
   return (
     <div className="flex min-h-screen">
@@ -17,11 +45,11 @@ export default function SignUpPage() {
             />
             <h2 className="mt-6 text-2xl font-bold">Get Started</h2>
             <p className="text-sm text-gray-600">
-              Welcome to Sponge Explorer - Let's create your account
+              Welcome to Sponge Explorer - Let&apos;s create your account
             </p>
           </div>
 
-          <form className="mt-8 space-y-6" >
+          <div className="mt-8 space-y-6">
             <div className="space-y-4">
               <div>
                 <label htmlFor="name" className="block text-sm font-medium">
@@ -45,6 +73,8 @@ export default function SignUpPage() {
                   name="email"
                   type="email"
                   required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
@@ -58,24 +88,25 @@ export default function SignUpPage() {
                   name="password"
                   type="password"
                   required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
                 />
               </div>
             </div>
 
-    
-            <button
-              type="submit"
+            <Button
+              onClick={handleCreateAccount}
               className="w-full rounded-md bg-blue-500 py-2 px-4 text-white hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
               Sign Up
-            </button>
-          </form>
+            </Button>
+          </div>
 
           <p className="mt-4 text-center text-sm text-gray-600">
             Already have an account?{" "}
             <Link
-              href="/login"
+              href="/api/auth/login"
               className="font-medium text-blue-600 hover:text-blue-500"
             >
               Sign In
@@ -91,6 +122,5 @@ export default function SignUpPage() {
         </div>
       </div>
     </div>
-  )
+  );
 }
-
