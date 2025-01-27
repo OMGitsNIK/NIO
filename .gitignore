@@ -1,1 +1,6 @@
 backend/venv/
+backend/app/__pycache__/
+backend/utils/__pycache__/
+web/.next/
+*.pyc
+web/node_modules/
