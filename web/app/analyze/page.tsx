@@ -4,12 +4,11 @@ import { useState, useCallback } from "react"
 import { useDropzone } from "react-dropzone"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { DashboardHeader } from "@/components/DashboardHeader"
+// import { DashboardHeader } from "@/components/DashboardHeader"
 import { SidebarComponent } from "@/components/Sidebar"
 import { BarChart3, Search, Hash,PanelLeft, Wand2 } from "lucide-react"
 import { Tooltip, TooltipContent,TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AnalysisSidebar } from "@/components/AnalysisSidebar"
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 
 export default function AnalyzePage() {
