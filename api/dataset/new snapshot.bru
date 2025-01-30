@@ -1,0 +1,21 @@
+meta {
+  name: new snapshot
+  type: http
+  seq: 2
+}
+
+post {
+  url: /v1/snapshot
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: sfdsfafwesfgwersdgfwsde
+}
+
+body:json {
+  {
+    "name": "test"
+  }
+}
