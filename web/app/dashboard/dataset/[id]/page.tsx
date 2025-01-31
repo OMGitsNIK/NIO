@@ -44,6 +44,7 @@ export default function Page({ params }: { params: { id: string } }) {
 
 	return (
 		<div className="p-8 md:mt-0 mt-16">
+			<Link href={'/dashboard/dataset/'+params.id+'/upload'}>Upload</Link>
 			<div className="grid grid-col-1 md:grid-cols-3 mt-4 gap-4">
 				{(data.snapshots as Snapshot[]).map((x) => (
 					<img
@@ -52,7 +53,7 @@ export default function Page({ params }: { params: { id: string } }) {
 						alt=""
 						height={200}
 						src={CONFIG.SERVER_URL + x.src}
-						onClick={() => handleImageClick(CONFIG.SERVER_URL + x.src)}
+						onClick={() => handleImageClick(x.src)}
 					/>
 				))}
 			</div>
@@ -67,7 +68,7 @@ export default function Page({ params }: { params: { id: string } }) {
 				<div className="flex w-full">
 				<div className="w-1/2">
 					<Image
-						src={selectedImage!}
+						src={CONFIG.SERVER_URL + selectedImage!}
 						alt="Selected Image"
 						style={{ width: "auto", height: "auto" }}
 					/>
@@ -76,8 +77,8 @@ export default function Page({ params }: { params: { id: string } }) {
 						<h2 className="text-xl">Name of Sponge</h2>
 						<p><strong>Description:</strong> {data.description}</p>
 						<p><strong>Location:</strong> {data.location}</p>
-						<Link href={""}>
-							<Button>Analyze</Button>
+						<Link href={"/analyze/"+selectedImage?.replace('/v1/bucket','')}>
+Analyze
 						</Link>
 					</div>
 				</div>

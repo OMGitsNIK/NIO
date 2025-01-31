@@ -299,7 +299,7 @@ def process_image(request):
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        inpainted, inpainted_path = inpaint_image(bilateral, img)
+        inpainted, inpainted_path = (img, img)
         step_paths.append(("Inpainted Image", inpainted_path))
 
         # Additional filtering using skimage

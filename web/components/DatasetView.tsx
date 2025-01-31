@@ -63,8 +63,8 @@ export function DatasetView({ datasets, onEditDataset, onDeleteDataset }: Datase
 							<div className="relative aspect-video rounded-lg overflow-hidden mb-4">
 								<Image
 									src={
-										dataset.image
-											? CONFIG.SERVER_URL + dataset.image
+										dataset.snapshots[0].src
+											? CONFIG.SERVER_URL + dataset.snapshots[0].src
 											: ""
 									}
 									alt={`${dataset.dataset__name} thumbnail`}
