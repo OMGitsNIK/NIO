@@ -7,8 +7,12 @@ import { Image, Modal } from "antd";
 import { format } from "date-fns";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
 
 export default function Page({ params }: { params: { id: string } }) {
+	
+	const router = useRouter();
+	
 	const [data, setData] = useState<any>(null);
 	const [loading, setLoading] = useState(true);
 	const [isModalVisible, setIsModalVisible] = useState(false);
@@ -39,6 +43,13 @@ export default function Page({ params }: { params: { id: string } }) {
 		setIsModalVisible(false);
 		setSelectedImage(null);
 	};
+
+	const handleAnalyzeClick = () => {
+		if (selectedImage) {
+		  localStorage.setItem("analyzeImage", selectedImage);
+		  window.location.href = "/analyze";
+		}
+	  };
 
 	if (loading) return <p>Loading...</p>;
 
@@ -76,9 +87,7 @@ export default function Page({ params }: { params: { id: string } }) {
 						<h2 className="text-xl">Name of Sponge</h2>
 						<p><strong>Description:</strong> {data.description}</p>
 						<p><strong>Location:</strong> {data.location}</p>
-						<Link href={""}>
-							<Button>Analyze</Button>
-						</Link>
+							<Button onClick={handleAnalyzeClick}>Analyze</Button>
 					</div>
 				</div>
 			</Modal>
