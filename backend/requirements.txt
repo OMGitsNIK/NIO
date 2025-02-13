@@ -5,7 +5,7 @@ django-cors-headers
 django-filter
 fpdf
 icecream
-python-opencv
+opencv-python-headless
 pillow
 PyWavelets
 requests
