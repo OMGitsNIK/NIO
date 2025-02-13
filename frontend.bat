@@ -12,4 +12,4 @@ cd C:\Users\Admin\Desktop\DBCE NIO\web
 
 @REM REM Start Next.js development server
 echo Starting Next.js server...
-npm install && npm run build npm run start
+npm install && npm run dev
