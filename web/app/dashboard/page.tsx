@@ -47,8 +47,8 @@ export default function DashboardPage() {
   }
 
   return (
-				<main className="flex-1 overflow-auto p-6 md:w-[75%] w-full">
-					<DatasetView
+				<main className="flex-1 overflow-auto p-6 md:w-[75%] w-full mt-8 md:mt-4">
+          <DatasetView
 						datasets={datasets}
 						onEditDataset={editDataset}
 						onDeleteDataset={deleteDataset}
