@@ -89,7 +89,7 @@ export default function Page({ params }: { params: { id: string } }) {
 						<p><strong>Description:</strong> {data.description}</p>
 						<p><strong>Location:</strong> {data.location}</p>
 						<Link href={"/analyze/"+selectedImage?.replace('/v1/bucket','')}>
-Analyze
+                           Analyze
 						</Link>
 					</div>
 				</div>
