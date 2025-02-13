@@ -299,7 +299,7 @@ def process_image(request):
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        inpainted, inpainted_path = inpaint_image(bilateral, img)
+        inpainted, inpainted_path = (img, img)
         step_paths.append(("Inpainted Image", inpainted_path))
 
         # Additional filtering using skimage
@@ -322,12 +322,12 @@ def process_image(request):
         laplace, thresh, thresh_path = extract_features(inpainted)
         step_paths.append(("Threshold Image", thresh_path))
 
-        response["feature_extraction"].update(
-            {
-                "blur_score": float(laplace),
-                "otsu_threshold": float(thresh.mean()),
-            }
-        )
+        # response["feature_extraction"].update(
+        #     {
+        #         "blur_score": float(laplace),
+        #         "otsu_threshold": float(thresh.mean()),
+        #     }
+        # )
 
         if operations.get("report_format") == "PDF":
             response["pdf"] = generate_pdf_report(step_paths)

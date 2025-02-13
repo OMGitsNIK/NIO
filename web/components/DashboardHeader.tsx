@@ -57,7 +57,7 @@ export function DashboardHeader() {
 													src="https://github.com/shadcn.png"
 													alt="@shadcn"
 												/>
-												<AvatarFallback>CN</AvatarFallback>
+												<AvatarFallback>{session.data?.user.name?.split(' ').map(n => n[0]).join('') }</AvatarFallback>
 											</Avatar>
 										</Button>
 									</DropdownMenuTrigger>
