@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
@@ -17,7 +17,13 @@ export default function AnalyzePage() {
   const [currentTask, setCurrentTask] = useState<string>("waiting")
   const [timeElapsed, setTimeElapsed] = useState<number>(0)
 
-  
+  useEffect(() => {
+    const storedImage = localStorage.getItem("analyzeImage");
+    if (storedImage) {
+      setPreview(storedImage);
+      localStorage.removeItem("analyzeImage");
+    }
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles?.[0]) {
@@ -48,7 +54,7 @@ export default function AnalyzePage() {
   ]
   
 
-  if (file && preview) {
+  if (preview) {
     return (
       <div className="flex h-screen overflow-hidden bg-white">
         <SidebarComponent  />
