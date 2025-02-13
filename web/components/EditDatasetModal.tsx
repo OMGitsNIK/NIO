@@ -26,10 +26,10 @@ interface EditDatasetModalProps {
 
 export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatasetModalProps) {
   const [open, setOpen] = useState(false)
-  const [datasetName, setDatasetName] = useState(dataset.title)
-  const [datasetDescription, setDatasetDescription] = useState(dataset.description)
+  const [datasetName, setDatasetName] = useState(dataset.dataset__name)
+  const [datasetDescription, setDatasetDescription] = useState(dataset.dataset__description)
   const [image, setImage] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string>(dataset.image)
+  const [preview, setPreview] = useState<string>(dataset.image ?? "")
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles?.[0]) {
@@ -50,9 +50,9 @@ export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatas
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault()
-    onEditDataset(dataset.id, {
-      title: datasetName,
-      description: datasetDescription,
+    onEditDataset(dataset.dataset_id, {
+      dataset__name: datasetName,
+      dataset__description: datasetDescription,
       image: preview,
     })
     setOpen(false)
@@ -61,9 +61,9 @@ export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatas
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {children}
+        <span onClick={(e) =>  { e.stopPropagation(); setOpen(true); }}>{children}</span>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[425px] bg-white" onClick={(e) =>  { e.stopPropagation(); }}>
         <DialogHeader>
           <DialogTitle>Edit Dataset</DialogTitle>
           <DialogDescription>
