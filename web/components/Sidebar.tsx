@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Layout, Map, Settings, Menu, X, ChevronLast, ChevronLeft, UserIcon } from "lucide-react";
+import { Layout,  Settings, Menu, X, ChevronLast, ChevronLeft, UserIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewDatasetModal } from "./NewDatasetModal";
 import { Dataset } from "@/types/db";
