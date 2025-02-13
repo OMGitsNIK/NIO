@@ -1,6 +1,6 @@
 import logging
-from lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features
-from lib.report_gen import generate_pdf_report
+from .lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features
+from .lib.report_gen import generate_pdf_report
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 import mimetypes
 from django.shortcuts import get_object_or_404
