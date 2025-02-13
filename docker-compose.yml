@@ -1,49 +1,28 @@
 services:
-  
-  web:
+  backend:
       build: ./backend  # Build the image using the Dockerfile in the current directory
       ports:
-        - "80:80"  # Map host port 80 to container port 80
-      depends_on:
-        - typesense
-  ocr:
-      build: ./ocr_ecs  # Build the image using the Dockerfile in the current directory
+        - "80:5000"  # Map host port 80 to container port 80
+  web:
+      build: ./web  # Build the image using the Dockerfile in the current directory
       ports:
-        - "8055:80"  # Map host port 80 to container port 80
-  typesense:
-    image: typesense/typesense:27.1
-    restart: always
-    command: >
-      --data-dir /data
-      --api-key=your_typesense_api_key
-    volumes:
-      - typesense_data:/data
-    ports:
-      - "8108:8108"
+        - "80:3000"  # Map host port 80 to container port 80
+      depends_on:
+        - backend
 
-  # grafana:
-  #   image: grafana/grafana:latest
+    
+  # typesense:
+  #   image: typesense/typesense:27.1
   #   restart: always
-  #   environment:
-  #     GF_SECURITY_ADMIN_USER: admin
-  #     GF_SECURITY_ADMIN_PASSWORD: your_grafana_password
+  #   command: >
+  #     --data-dir /data
+  #     --api-key=your_typesense_api_key
   #   volumes:
-  #     - grafana_data:/var/lib/grafana
+  #     - typesense_data:/data
   #   ports:
-  #     - "3001:3000"
-      
-  # sync:
-  #   build: ./cron
-  #   depends_on:
-  #     - typesense
+  #     - "8108:8108"
 
-  # ofelia:
-  #   image: mcuadros/ofelia:latest
-  #   restart: always
-  #   volumes:
-  #     - /var/run/docker.sock:/var/run/docker.sock:ro
-  #   command: daemon --config=./typesense/config.ini
 
-volumes:
-  typesense_data:
-  # grafana_data:
+# volumes:
+#   typesense_data:
+
