@@ -1,0 +1,17 @@
+FROM node:14
+
+# Set environment variables
+ENV APP_DIR ./
+ENV PATH ${PATH}:${APP_DIR}/node_modules/.bin
+
+# Create app directory
+WORKDIR ${APP_DIR}
+
+# Install dependencies and copy all files from your local project to the container
+COPY . .
+
+# Expose port 3000, which is common for Next.js applications
+EXPOSE 3000
+
+# Command to run the application when the container starts
+CMD ["npm", "start"]

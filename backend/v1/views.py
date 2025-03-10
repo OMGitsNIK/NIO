@@ -1,4 +1,6 @@
 import logging
+from lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features
+from lib.report_gen import generate_pdf_report
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 import mimetypes
 from django.shortcuts import get_object_or_404
@@ -298,7 +300,7 @@ def process_image(request):
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        inpainted, inpainted_path = inpaint_image(bilateral, img)
+        inpainted, inpainted_path = (img, img)
         step_paths.append(("Inpainted Image", inpainted_path))
 
         # Additional filtering using skimage
@@ -321,12 +323,12 @@ def process_image(request):
         laplace, thresh, thresh_path = extract_features(inpainted)
         step_paths.append(("Threshold Image", thresh_path))
 
-        response["feature_extraction"].update(
-            {
-                "blur_score": float(laplace),
-                "otsu_threshold": float(thresh.mean()),
-            }
-        )
+        # response["feature_extraction"].update(
+        #     {
+        #         "blur_score": float(laplace),
+        #         "otsu_threshold": float(thresh.mean()),
+        #     }
+        # )
 
         if operations.get("report_format") == "PDF":
             response["pdf"] = generate_pdf_report(step_paths)
@@ -336,6 +338,7 @@ def process_image(request):
     except Exception as e:
         logging.error(f"An error occurred: {e}")
         return JsonResponse({"error": "An error occurred"}, status=500)
+
 
 
 def convert_image_to_opencv(image):
@@ -385,3 +388,4 @@ def extract_features(inpainted):
     thresh_path = "temp_thresh.jpg"
     cv2.imwrite(thresh_path, thresh)
     return laplace, thresh, thresh_path
+

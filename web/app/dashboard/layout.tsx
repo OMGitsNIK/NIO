@@ -1,3 +1,4 @@
+import { DashboardHeader } from "@/components/DashboardHeader";
 import { SidebarComponent } from "@/components/Sidebar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -9,9 +10,12 @@ export default function RootLayout({
 	return (
 		<div className="flex h-screen ">
 			<SidebarComponent />
-			<Toaster />
+			<div className="w-full">
+			<DashboardHeader />
+			<Toaster />	
 
 			{children}
+			</div>
 		</div>
 	);
 }

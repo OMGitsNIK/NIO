@@ -1,15 +1,14 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import { useDropzone } from "react-dropzone"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { DashboardHeader } from "@/components/DashboardHeader"
+// import { DashboardHeader } from "@/components/DashboardHeader"
 import { SidebarComponent } from "@/components/Sidebar"
 import { BarChart3, Search, Hash,PanelLeft, Wand2 } from "lucide-react"
 import { Tooltip, TooltipContent,TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AnalysisSidebar } from "@/components/AnalysisSidebar"
-import { SidebarProvider } from "@/components/ui/sidebar"
 
 
 export default function AnalyzePage() {
@@ -18,7 +17,13 @@ export default function AnalyzePage() {
   const [currentTask, setCurrentTask] = useState<string>("waiting")
   const [timeElapsed, setTimeElapsed] = useState<number>(0)
 
-  
+  useEffect(() => {
+    const storedImage = localStorage.getItem("analyzeImage");
+    if (storedImage) {
+      setPreview(storedImage);
+      localStorage.removeItem("analyzeImage");
+    }
+  }, []);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles?.[0]) {
@@ -49,7 +54,7 @@ export default function AnalyzePage() {
   ]
   
 
-  if (file && preview) {
+  if (preview) {
     return (
       <div className="flex h-screen overflow-hidden bg-white">
         <SidebarComponent  />
