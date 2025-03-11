@@ -22,10 +22,10 @@ interface DatasetViewProps {
 	onDeleteDataset: (id: number) => void;
 }
 
-export function DatasetView({ datasets, onEditDataset, onDeleteDataset }: DatasetViewProps) {
+export function DatasetView({ datasets, onEditDataset, onDeleteDataset }: any) {
 	return (
 		<div className="grid grid-cols-2 gap-6">
-			{datasets.map((dataset) => (
+			{datasets.map((dataset: Dataset) => (
 				<Card key={dataset.dataset_id}>
 					<CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
 						<CardTitle className="text-md font-bold">{dataset.dataset__name}</CardTitle>

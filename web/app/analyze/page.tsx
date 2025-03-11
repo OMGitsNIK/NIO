@@ -143,9 +143,9 @@ export default function AnalyzePage() {
                           if (e.key === 'Enter' || e.key === ' ') {
                             e.preventDefault()
                             const input = document.querySelector('input[type="file"]')
-                            if (input) {
-                              input.click()
-                            }
+                            // if (input) {
+                            //   input.click()
+                            // }
                           }
                         }}
                       >
@@ -159,9 +159,9 @@ export default function AnalyzePage() {
                     onClick={(e) => {
                       e.stopPropagation()
                       const input = document.querySelector('input[type="file"]')
-                      if (input) {
-                        input.click()
-                      }
+                      // if (input) {
+                      //   input.click()
+                      // }
                     }}
                   >
                     Upload your Photo

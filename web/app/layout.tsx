@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {Rubik} from 'next/font/google'
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { DashboardLayout } from "@/components/Sidebar";
+// import { DashboardLayout } from "@/components/Sidebar";
 import ClientSessionProvider from "@/components/client-session-provider";
 
 
