@@ -1,0 +1,27 @@
+[tool.poetry]
+name = "nio-sponge-explorer"
+version = "0.1.0"
+description = "software to analyze sponges"
+authors = ["RhysJosmin <55994011+Rhysjosmin@users.noreply.github.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.13"
+django = "^5.1.7"
+django-cors-headers = "^4.7.0"
+django-filter = "^25.1"
+supabase = "^2.13.0"
+bcrypt = "^4.3.0"
+pillow = "^11.1.0"
+opencv-python = "^4.11.0.86"
+icecream = "^2.1.4"
+requests = "^2.32.3"
+scikit-image = "^0.25.2"
+pyjwt = "^2.10.1"
+pywavelets = "^1.8.0"
+psycopg2-binary = "^2.9.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
