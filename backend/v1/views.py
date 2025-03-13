@@ -288,21 +288,26 @@ def process_image(request):
             "feature_extraction": {},
             "generated_images": {},
         }
-
+        ic(response)
         step_paths = []  # Store paths to images and captions for the PDF
 
         denoised, denoised_path = denoise_image(img)
         step_paths.append(("Denoised Image", denoised_path))
-
+        ic(denoised,denoised_path)
         deconvolved, deconvolved_path = deconvolve_image(denoised)
         step_paths.append(("Deconvolved Image", deconvolved_path))
 
+        ic(deconvolved, deconvolved_path)
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        inpainted, inpainted_path = (img, img)
+        ic(bilateral, bilateral_path)
+        inpainted, inpainted_2 = (img, img)
+        inpainted_path = "temp_gaussian_filtered.jpg"
+        cv2.imwrite(inpainted_path, (inpainted_2 * 255).astype(np.uint8))
         step_paths.append(("Inpainted Image", inpainted_path))
 
+        ic(inpainted, inpainted_path)
         # Additional filtering using skimage
 
         gaussian_filtered = gaussian(inpainted, sigma=1)
@@ -310,18 +315,26 @@ def process_image(request):
         cv2.imwrite(gaussian_filtered_path, (gaussian_filtered * 255).astype(np.uint8))
         step_paths.append(("Gaussian Filtered Image", gaussian_filtered_path))
 
+        ic(gaussian_filtered, gaussian_filtered_path)
+
         sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
         sobel_filtered_path = "temp_sobel_filtered.jpg"
         cv2.imwrite(sobel_filtered_path, (sobel_filtered * 255).astype(np.uint8))
         step_paths.append(("Sobel Filtered Image", sobel_filtered_path))
+
+        ic(sobel_filtered, sobel_filtered_path)
 
         wavelet_denoised = denoise_wavelet(inpainted)
         wavelet_denoised_path = "temp_wavelet_denoised.jpg"
         cv2.imwrite(wavelet_denoised_path, (wavelet_denoised * 255).astype(np.uint8))
         step_paths.append(("Wavelet Denoised Image", wavelet_denoised_path))
 
+        ic(wavelet_denoised, wavelet_denoised_path)
+
         laplace, thresh, thresh_path = extract_features(inpainted)
         step_paths.append(("Threshold Image", thresh_path))
+
+        ic(laplace, thresh, thresh_path)
 
         # response["feature_extraction"].update(
         #     {
@@ -333,6 +346,7 @@ def process_image(request):
         if operations.get("report_format") == "PDF":
             response["pdf"] = generate_pdf_report(step_paths)
 
+        ic(response)
         return JsonResponse(response)
 
     except Exception as e:
@@ -388,4 +402,3 @@ def extract_features(inpainted):
     thresh_path = "temp_thresh.jpg"
     cv2.imwrite(thresh_path, thresh)
     return laplace, thresh, thresh_path
-

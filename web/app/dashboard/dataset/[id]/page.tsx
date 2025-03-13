@@ -2,11 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { CONFIG } from "@/lib/config";
-<<<<<<< HEAD
 import { format } from "date-fns";
 import Link from "next/link";
 import Image from "next/image";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Loader2, MoreVertical, Copy, Trash, Edit } from "lucide-react";
 import {
   Dialog,
@@ -21,27 +19,14 @@ import {
   DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+import { Modal } from "antd";
+import type { Snapshot } from "@/types/db";
 
 export default function Page({ params }: { params: { id: string } }) {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-=======
-import type { Snapshot } from "@/types/db";
-import { Image, Modal } from "antd";
-import { format } from "date-fns";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
-
-export default function Page({ params }: { params: { id: string } }) {
-	
-	const router = useRouter();
-	
-	const [data, setData] = useState<any>(null);
-	const [loading, setLoading] = useState(true);
-	const [isModalVisible, setIsModalVisible] = useState(false);
-	const [selectedImage, setSelectedImage] = useState<string | null>(null);
->>>>>>> 0feff33f1c369507296b17159ca301fcb23a8b0d
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -59,7 +44,23 @@ export default function Page({ params }: { params: { id: string } }) {
     fetchData();
   }, [params.id]);
 
-<<<<<<< HEAD
+  const handleImageClick = (src: string) => {
+    setSelectedImage(src);
+    setIsModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setIsModalVisible(false);
+    setSelectedImage(null);
+  };
+
+  const handleAnalyzeClick = () => {
+    if (selectedImage) {
+      localStorage.setItem("analyzeImage", selectedImage);
+      window.location.href = "/analyze";
+    }
+  };
+
   if (loading)
     return (
       <div className="p-6 w-full flex items-center justify-center">
@@ -84,33 +85,17 @@ export default function Page({ params }: { params: { id: string } }) {
       </Link>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-4">
         {data.snapshots.length > 0 ? (
-          data.snapshots.map((x) => (
+          data.snapshots.map((x: Snapshot) => (
             <div key={x.id} className="relative group">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Image
-                    width={800}
-                    height={800}
-                    className="aspect-video object-cover rounded-lg shadow-sm transition-transform duration-300 hover:scale-105 hover:shadow-md cursor-pointer"
-                    alt="Snapshot"
-                    src={CONFIG.SERVER_URL + x.src}
-                  />
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <h2 className="text-lg font-medium">Image Details</h2>
-                  </DialogHeader>
-                  <Image
-                    width={800}
-                    height={800}
-                    className="w-full rounded-lg"
-                    alt="Snapshot"
-                    src={CONFIG.SERVER_URL + x.src}
-                  />
-                  <p className="text-gray-500 mt-2">Filename: {x.filename}</p>
-                  <p className="text-gray-500">Size: {x.size} KB</p>
-                </DialogContent>
-              </Dialog>
+              <Image
+                width={800}
+                height={800}
+                className="aspect-video object-cover rounded-lg shadow-sm transition-transform duration-300 hover:scale-105 hover:shadow-md cursor-pointer"
+                alt="Snapshot"
+                src={CONFIG.SERVER_URL + x.src}
+                onClick={() => handleImageClick(x.src)}
+              />
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -141,70 +126,36 @@ export default function Page({ params }: { params: { id: string } }) {
           </div>
         )}
       </div>
+
+      {/* Image Preview Modal */}
+      <Modal
+        visible={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        width={1000}
+      >
+        <div className="flex w-full">
+          <div className="w-1/2">
+            <Image
+              width={800}
+              height={800}
+              src={CONFIG.SERVER_URL + selectedImage!}
+              alt="Selected Image"
+              style={{ width: "auto", height: "auto" }}
+            />
+          </div>
+          <div className="w-1/2 ml-4 flex flex-col gap-2">
+            <h2 className="text-xl">Name of Sponge</h2>
+            <p>
+              <strong>Description:</strong> {data.description}
+            </p>
+            <p>
+              <strong>Location:</strong> {data.location}
+            </p>
+            <Button onClick={handleAnalyzeClick}>Analyze</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
-=======
-	const handleImageClick = (src: string) => {
-		setSelectedImage(src);
-		setIsModalVisible(true);
-	};
-
-	const handleModalClose = () => {
-		setIsModalVisible(false);
-		setSelectedImage(null);
-	};
-
-	const handleAnalyzeClick = () => {
-		if (selectedImage) {
-		  localStorage.setItem("analyzeImage", selectedImage);
-		  window.location.href = "/analyze";
-		}
-	  };
-
-	if (loading) return <p>Loading...</p>;
-
-	return (
-		<div className="p-8 md:mt-0 mt-16">
-			<Link href={'/dashboard/dataset/'+params.id+'/upload'}>Upload</Link>
-			<div className="grid grid-col-1 md:grid-cols-3 mt-4 gap-4">
-				{(data.snapshots as Snapshot[]).map((x) => (
-					<img
-						key={x.id}
-						className="aspect-video object-cover rounded-lg shadow-md transition-transform duration-200 hover:scale-105 cursor-pointer"
-						alt=""
-						height={200}
-						src={CONFIG.SERVER_URL + x.src}
-						onClick={() => handleImageClick(x.src)}
-					/>
-				))}
-			</div>
-
-			{/* Image Preview Modal */}
-			<Modal
-				visible={isModalVisible}
-				onCancel={handleModalClose}
-				footer={null}
-				width={1000}
-			>
-				<div className="flex w-full">
-				<div className="w-1/2">
-					<Image
-						src={CONFIG.SERVER_URL + selectedImage!}
-						alt="Selected Image"
-						style={{ width: "auto", height: "auto" }}
-					/>
-					</div>
-					<div className="w-1/2 ml-4 flex flex-col gap-2">
-						<h2 className="text-xl">Name of Sponge</h2>
-						<p><strong>Description:</strong> {data.description}</p>
-						<p><strong>Location:</strong> {data.location}</p>
-						<Link href={"/analyze/"+selectedImage?.replace('/v1/bucket','')}>
-                           Analyze
-						</Link>
-					</div>
-				</div>
-			</Modal>
-		</div>
-	);
->>>>>>> 0feff33f1c369507296b17159ca301fcb23a8b0d
 }
