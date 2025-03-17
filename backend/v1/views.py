@@ -19,6 +19,26 @@ import base64
 from skimage.filters import gaussian, sobel
 from skimage.restoration import denoise_wavelet
 
+import time
+from django.http import StreamingHttpResponse
+
+sse_clients = []
+
+def events(request):
+    def event_stream():
+        while True:
+            if sse_clients:
+                client = sse_clients.pop(0)
+                logging.info(f"Sending data to client: {client}")
+                yield f"data: {json.dumps(client)}\n\n"
+            time.sleep(1)  # Prevent excessive CPU usage
+
+    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+
+def alert_frontend(message: str, progress: int):
+    sse_clients.append({"message": message, "progress": progress})
+    print(f"Alerted Frontend: {message} ({progress}%)")
+
 
 @csrf_exempt
 def dataset(request):
@@ -282,6 +302,8 @@ def process_image(request):
         image = request.FILES["image"]
         operations = json.loads(request.POST.get("operations", "{}"))
 
+        alert_frontend("Starting image processing...", 5)
+
         img = convert_image_to_opencv(image)
         response = {
             "preprocessing": {},
@@ -291,15 +313,25 @@ def process_image(request):
         ic(response)
         step_paths = []  # Store paths to images and captions for the PDF
 
+        time.sleep(1)
+        alert_frontend("Denoising image...", 20)
+        time.sleep(1)
+
         denoised, denoised_path = denoise_image(img)
         step_paths.append(("Denoised Image", denoised_path))
         ic(denoised,denoised_path)
         deconvolved, deconvolved_path = deconvolve_image(denoised)
         step_paths.append(("Deconvolved Image", deconvolved_path))
 
+        alert_frontend("Applying deconvolution...", 40)
+        time.sleep(1)
+
         ic(deconvolved, deconvolved_path)
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
+
+        alert_frontend("Applying filters...", 60)
+        time.sleep(1)
 
         ic(bilateral, bilateral_path)
         inpainted, inpainted_2 = (img, img)
@@ -343,10 +375,16 @@ def process_image(request):
         #     }
         # )
 
+        alert_frontend("Generating report...", 80)
+        time.sleep(1)
+
         if operations.get("report_format") == "PDF":
             response["pdf"] = generate_pdf_report(step_paths)
 
         ic(response)
+
+        alert_frontend("Process complete!", 100)
+
         return JsonResponse(response)
 
     except Exception as e:
