@@ -54,12 +54,12 @@ export default function Page({ params }: { params: { id: string } }) {
     setSelectedImage(null);
   };
 
-  const handleAnalyzeClick = () => {
-    if (selectedImage) {
-      localStorage.setItem("analyzeImage", selectedImage);
-      window.location.href = "/analyze";
+  const handleAnalyzeClick = (imageId: string) => {
+    if (imageId) {
+      window.location.href = `/analyze/${imageId}`;
     }
   };
+  
 
   if (loading)
     return (
@@ -152,8 +152,8 @@ export default function Page({ params }: { params: { id: string } }) {
             <p>
               <strong>Location:</strong> {data.location}
             </p>
-            <Button onClick={handleAnalyzeClick}>Analyze</Button>
-          </div>
+            <Button onClick={() => handleAnalyzeClick(selectedImage!)}>Analyze</Button>
+            </div>
         </div>
       </Modal>
     </div>
