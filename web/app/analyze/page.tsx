@@ -17,6 +17,7 @@ export default function AnalyzePage() {
   const [preview, setPreview] = useState<string>("")
   const [currentTask, setCurrentTask] = useState<string>("waiting")
   const [timeElapsed, setTimeElapsed] = useState<number>(0)
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false)
 
   useEffect(() => {
     const storedImage = localStorage.getItem("analyzeImage");
@@ -46,6 +47,14 @@ export default function AnalyzePage() {
     multiple: false
   })
 
+  const handleAnalysisStart = () => {
+    setIsAnalyzing(true);
+  };
+
+  const handleAnalysisComplete = () => {
+    setIsAnalyzing(false);
+  };
+
   const actionButtons = [
     { icon: BarChart3, tooltip: "Report Generation" },
     { icon: Search, tooltip: "Image Classification" },
@@ -72,7 +81,7 @@ export default function AnalyzePage() {
 
             {/* Image Display */}
             <div className="relative flex flex-col items-center justify-between min-h-[calc(100%-60px)]">
-              <div className="relative w-full max-w-5xl mx-auto my-8  h-[calc(100vh-300px)] ">
+              <div className={`relative w-full max-w-5xl mx-auto my-8  h-[calc(100vh-300px)] ${isAnalyzing ? 'img-effect' : ''}`}>
                 <Image
                   src={preview}
                   alt="Uploaded sponge image"
@@ -112,7 +121,7 @@ export default function AnalyzePage() {
             </div>
           </main>
        
-        <AnalysisSidebar file={file} />
+        <AnalysisSidebar file={file} onAnalysisStart={handleAnalysisStart} onAnalysisComplete={handleAnalysisComplete} />
       </div>
     )
   }

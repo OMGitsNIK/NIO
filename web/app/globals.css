@@ -106,3 +106,22 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@keyframes maskAnimation {
+  0% {
+    -webkit-mask-position: 0;
+    mask-position: 0;
+  }
+  100% {
+    -webkit-mask-position: 120%;
+    mask-position: 120%;
+  }
+}
+
+.img-effect {
+  -webkit-mask-image: linear-gradient(45deg, #000 25%, rgba(0, 0, 0, 0.2) 50%, #000 75%);
+  mask-image: linear-gradient(45deg, #000 25%, rgba(0, 0, 0, 0.2) 50%, #000 75%);
+  -webkit-mask-size: 800%;
+  mask-size: 800%;
+  animation: maskAnimation 2s linear infinite;
+}

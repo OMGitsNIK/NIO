@@ -16,9 +16,11 @@ import {
 interface AnalysisSidebarProps {
   file: File | null;
   imageSrc: string | null;
+  onAnalysisStart: () => void;
+  onAnalysisComplete: () => void;
 }
 
-export function AnalysisSidebar({ file, imageSrc }: AnalysisSidebarProps) {
+export function AnalysisSidebar({ file, imageSrc, onAnalysisStart, onAnalysisComplete }: AnalysisSidebarProps) {
   const [selectedObjects, setSelectedObjects] = useState<string[]>([]);
   const [reportFormat, setReportFormat] = useState("PDF");
   const [region, setRegion] = useState("Region (1)");
@@ -39,37 +41,41 @@ export function AnalysisSidebar({ file, imageSrc }: AnalysisSidebarProps) {
   const handleAnalysis = () => {
     if (!file && !imageSrc) return;
 
-    if (file) {
-      const fd = new FormData();
-      fd.append("image", file);
-      fd.append(
-        "operations",
-        JSON.stringify({
-          count: selectedObjects,
-          include_images: selectedImages,
-          report_format: reportFormat,
-        })
-      );
+    onAnalysisStart();
 
-      axios.post(`${CONFIG.SERVER_URL}/v1/process_image`, fd).then((r) => {
-        console.log(r.data);
-        downloadPdf(r.data.pdf, "report.pdf");
-      });
-    } else if (imageSrc) {
-      axios
-        .post(`${CONFIG.SERVER_URL}/v1/process_image`, {
-          image_url: imageSrc,
-          operations: {
-            count: selectedObjects,
-            include_images: selectedImages,
-            report_format: reportFormat,
-          },
-        })
-        .then((r) => {
-          console.log(r.data);
-          downloadPdf(r.data.pdf, "report.pdf");
-        });
-    }
+    const processImage = file ? processFileImage : processUrlImage;
+
+    processImage().then(() => {
+      onAnalysisComplete();
+    });
+  };
+
+  const processFileImage = async () => {
+    const fd = new FormData();
+    fd.append("image", file!);
+    fd.append(
+      "operations",
+      JSON.stringify({
+        count: selectedObjects,
+        include_images: selectedImages,
+        report_format: reportFormat,
+      })
+    );
+
+    const response = await axios.post(`${CONFIG.SERVER_URL}/v1/process_image`, fd);
+    downloadPdf(response.data.pdf, "report.pdf");
+  };
+
+  const processUrlImage = async () => {
+    const response = await axios.post(`${CONFIG.SERVER_URL}/v1/process_image`, {
+      image_url: imageSrc,
+      operations: {
+        count: selectedObjects,
+        include_images: selectedImages,
+        report_format: reportFormat,
+      },
+    });
+    downloadPdf(response.data.pdf, "report.pdf");
   };
 
   const downloadPdf = (b64: string, filename: string) => {
