@@ -1,25 +1,18 @@
 FROM node:18-alpine AS builder
 
-
-# Set working directory
 WORKDIR /app
 
-# Copy package files and install dependencies
+# Install dependencies and build
 COPY package.json package-lock.json ./
-RUN npm install --force
-
-# Copy project files and build
-COPY . ./
+RUN npm install 
+COPY . .
 RUN npm run build
 
-# Use a lightweight image for production
+# Production image
 FROM node:18-alpine AS runner
-WORKDIR /app
 
-# Copy built files from builder
+WORKDIR /app
 COPY --from=builder /app ./
 
-# Expose port and start the app
 EXPOSE 3000
 CMD ["npm", "run", "start"]
-
