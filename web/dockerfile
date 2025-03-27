@@ -1,18 +1,14 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
 
 WORKDIR /app
 
-# Install dependencies and build
+# Install dependencies
 COPY package.json package-lock.json ./
 RUN npm install 
+
+# Copy source code
 COPY . .
-RUN npm run build
 
-# Production image
-FROM node:18-alpine AS runner
-
-WORKDIR /app
-COPY --from=builder /app ./
-
+# Expose port and start the dev server
 EXPOSE 3000
-CMD ["npm", "run", "start"]
+CMD ["npm", "run", "dev"]
