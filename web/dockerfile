@@ -1,17 +1,25 @@
-FROM node:14
+FROM node:18-alpine AS builder
 
-# Set environment variables
-ENV APP_DIR ./
-ENV PATH ${PATH}:${APP_DIR}/node_modules/.bin
 
-# Create app directory
-WORKDIR ${APP_DIR}
+# Set working directory
+WORKDIR /app
 
-# Install dependencies and copy all files from your local project to the container
-COPY . .
+# Copy package files and install dependencies
+COPY package.json package-lock.json ./
+RUN npm install --force
 
-# Expose port 3000, which is common for Next.js applications
+# Copy project files and build
+COPY . ./
+RUN npm run build
+
+# Use a lightweight image for production
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+# Copy built files from builder
+COPY --from=builder /app ./
+
+# Expose port and start the app
 EXPOSE 3000
+CMD ["npm", "run", "start"]
 
-# Command to run the application when the container starts
-CMD ["npm", "start"]
