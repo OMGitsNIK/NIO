@@ -8,4 +8,5 @@ urlpatterns = [
     path("bucket", views.bucket, name="bucket"),
     path("dataset/<id>", views.dataset_id, name="dataset_id"),
     path("process_image", views.process_image, name="process_image"),
+    path('events/', views.events, name='events'),
 ]

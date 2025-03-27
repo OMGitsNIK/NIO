@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Image from "next/image"
 import { useDropzone } from "react-dropzone"
 import { Button } from "@/components/ui/button"
@@ -29,7 +29,7 @@ export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatas
   const [datasetName, setDatasetName] = useState(dataset.dataset__name)
   const [datasetDescription, setDatasetDescription] = useState(dataset.dataset__description)
   const [image, setImage] = useState<File | null>(null)
-  const [preview, setPreview] = useState<string>(dataset.image ?? "")
+  const [preview, setPreview] = useState<string>(dataset.snapshots[0].src ?? "")
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles?.[0]) {
@@ -53,11 +53,13 @@ export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatas
     onEditDataset(dataset.dataset_id, {
       dataset__name: datasetName,
       dataset__description: datasetDescription,
-      image: preview,
+      // image: preview,
     })
     setOpen(false)
   }
-
+ useEffect(()=>{
+  console.log(image)
+ },[image])
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -67,7 +69,7 @@ export function EditDatasetModal({ children, dataset, onEditDataset }: EditDatas
         <DialogHeader>
           <DialogTitle>Edit Dataset</DialogTitle>
           <DialogDescription>
-            Make changes to your dataset here. Click save when you're done.
+            Make changes to your dataset here. Click save when you&apos;re done.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit}>

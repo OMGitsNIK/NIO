@@ -1,8 +1,8 @@
 "use client"
 
-import { useState, useCallback } from "react"
-import Image from "next/image"
-import { useDropzone } from "react-dropzone"
+import { useState } from "react"
+// import Image from "next/image"
+// import { useDropzone } from "react-dropzone"
 import {
 	Select,
 	SelectContent,
@@ -26,19 +26,19 @@ import { Label } from "@/components/ui/label"
 import { Plus } from 'lucide-react'
 import axios from "axios";
 import { CONFIG } from "@/lib/config";
-import { Dataset } from "@/types/db";
+// import { Dataset } from "@/types/db";
 import { useSession } from "next-auth/react";
 
-interface NewDatasetModalProps {
-	handleAddDataset: (dataset: {
-		userId: string;
-		title: string;
-		description: string;
-		// image: string
-		// items: number
-		// createdDate: string
-	}) => void;
-}
+// interface NewDatasetModalProps {
+// 	handleAddDataset: (dataset: {
+// 		userId: string;
+// 		title: string;
+// 		description: string;
+// 		// image: string
+// 		// items: number
+// 		// createdDate: string
+// 	}) => void;
+// }
 
 export function NewDatasetModal() {
 	const session = useSession();

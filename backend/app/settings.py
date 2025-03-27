@@ -84,18 +84,18 @@ BYjJqKquuGa8eqUTcRoypbm2qnGy3Ot0rGgEgTBAPTf+5+pmSYsEhC9wTla4DXvl
 BCRYPT_SALT = bcrypt.gensalt()
 
 DATABASES = {
-    "__default": {
+    "default": {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": BASE_DIR / "db.sqlite3",
     },
-    "default": {
+    "postgresql": {
         "ENGINE": "django.db.backends.postgresql",
         "NAME": "postgres",
         "USER": "postgres",
         "PASSWORD": "postgres",
         "HOST": "localhost",
-        "PORT": "54322",
-    },
+        "PORT": "5432",
+    }
 }
 
 

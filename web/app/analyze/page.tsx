@@ -9,6 +9,7 @@ import { SidebarComponent } from "@/components/Sidebar"
 import { BarChart3, Search, Hash,PanelLeft, Wand2 } from "lucide-react"
 import { Tooltip, TooltipContent,TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { AnalysisSidebar } from "@/components/AnalysisSidebar"
+import ProgressTracker from "@/components/ProgressTracker"
 
 
 export default function AnalyzePage() {
@@ -65,6 +66,7 @@ export default function AnalyzePage() {
               <div className="flex items-center gap-8 text-sm text-muted-foreground">
                 <span>current task : {currentTask}</span>
                 <span>time elapsed : {timeElapsed} ms</span>
+                <ProgressTracker />
               </div>
             </div>
 
@@ -110,7 +112,7 @@ export default function AnalyzePage() {
             </div>
           </main>
        
-        <AnalysisSidebar file={file} />
+        <AnalysisSidebar  file={file} />
       </div>
     )
   }
@@ -159,9 +161,9 @@ export default function AnalyzePage() {
                     onClick={(e) => {
                       e.stopPropagation()
                       const input = document.querySelector('input[type="file"]')
-                      // if (input) {
-                      //   input.click()
-                      // }
+                      if (input) {
+                        (input as any).click()
+                      }
                     }}
                   >
                     Upload your Photo

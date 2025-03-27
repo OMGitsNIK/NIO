@@ -15,7 +15,7 @@ import {
 
 interface AnalysisSidebarProps {
   file: File | null;
-  imageSrc: string | null;
+  imageSrc?: string | null;
 }
 
 export function AnalysisSidebar({ file, imageSrc }: AnalysisSidebarProps) {

@@ -4,31 +4,29 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
-import { Layout,  Settings, Menu, X, ChevronLast, ChevronLeft, UserIcon } from "lucide-react";
+import { Layout,  Settings, Menu, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { NewDatasetModal } from "./NewDatasetModal";
-import { Dataset } from "@/types/db";
-import { CONFIG } from "@/lib/config";
-import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { signOut, useSession } from "next-auth/react";
+import { signOut } from "next-auth/react";
+// import {  useSession } from "next-auth/react";
 
-interface SidebarProps {
-	onAddDataset: (dataset: {
-		title: string;
-		description: string;
-		image: string;
-		items: number;
-		createdDate: string;
-	}) => void;
-}
+// interface SidebarProps {
+// 	onAddDataset: (dataset: {
+// 		title: string;
+// 		description: string;
+// 		image: string;
+// 		items: number;
+// 		createdDate: string;
+// 	}) => void;
+// }
 
 export function SidebarComponent() {
 	const pathname = usePathname();
 	const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 	const [isMinimized, setIsMinimized] = useState(false);
-	const { data: session } = useSession();
+	// const { data: session } = useSession();
 
 	const navItems = [
 		{ href: "/dashboard", icon: Layout, label: "Dashboard" },

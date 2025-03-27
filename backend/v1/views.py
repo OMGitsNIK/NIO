@@ -19,6 +19,26 @@ import base64
 from skimage.filters import gaussian, sobel
 from skimage.restoration import denoise_wavelet
 
+import time
+from django.http import StreamingHttpResponse
+
+sse_clients = []
+
+def events(request):
+    def event_stream():
+        while True:
+            if sse_clients:
+                client = sse_clients.pop(0)
+                logging.info(f"Sending data to client: {client}")
+                yield f"data: {json.dumps(client)}\n\n"
+            time.sleep(1)  # Prevent excessive CPU usage
+
+    return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
+
+def alert_frontend(message: str, progress: int):
+    sse_clients.append({"message": message, "progress": progress})
+    print(f"Alerted Frontend: {message} ({progress}%)")
+
 
 @csrf_exempt
 def dataset(request):
@@ -282,27 +302,44 @@ def process_image(request):
         image = request.FILES["image"]
         operations = json.loads(request.POST.get("operations", "{}"))
 
+        alert_frontend("Starting image processing...", 5)
+
         img = convert_image_to_opencv(image)
         response = {
             "preprocessing": {},
             "feature_extraction": {},
             "generated_images": {},
         }
-
+        ic(response)
         step_paths = []  # Store paths to images and captions for the PDF
+
+        time.sleep(1)
+        alert_frontend("Denoising image...", 20)
+        time.sleep(1)
 
         denoised, denoised_path = denoise_image(img)
         step_paths.append(("Denoised Image", denoised_path))
-
+        ic(denoised,denoised_path)
         deconvolved, deconvolved_path = deconvolve_image(denoised)
         step_paths.append(("Deconvolved Image", deconvolved_path))
 
+        alert_frontend("Applying deconvolution...", 40)
+        time.sleep(1)
+
+        ic(deconvolved, deconvolved_path)
         bilateral, bilateral_path = apply_bilateral_filter(deconvolved)
         step_paths.append(("Bilateral Filtered Image", bilateral_path))
 
-        inpainted, inpainted_path = (img, img)
+        alert_frontend("Applying filters...", 60)
+        time.sleep(1)
+
+        ic(bilateral, bilateral_path)
+        inpainted, inpainted_2 = (img, img)
+        inpainted_path = "temp_gaussian_filtered.jpg"
+        cv2.imwrite(inpainted_path, (inpainted_2 * 255).astype(np.uint8))
         step_paths.append(("Inpainted Image", inpainted_path))
 
+        ic(inpainted, inpainted_path)
         # Additional filtering using skimage
 
         gaussian_filtered = gaussian(inpainted, sigma=1)
@@ -310,18 +347,26 @@ def process_image(request):
         cv2.imwrite(gaussian_filtered_path, (gaussian_filtered * 255).astype(np.uint8))
         step_paths.append(("Gaussian Filtered Image", gaussian_filtered_path))
 
+        ic(gaussian_filtered, gaussian_filtered_path)
+
         sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
         sobel_filtered_path = "temp_sobel_filtered.jpg"
         cv2.imwrite(sobel_filtered_path, (sobel_filtered * 255).astype(np.uint8))
         step_paths.append(("Sobel Filtered Image", sobel_filtered_path))
+
+        ic(sobel_filtered, sobel_filtered_path)
 
         wavelet_denoised = denoise_wavelet(inpainted)
         wavelet_denoised_path = "temp_wavelet_denoised.jpg"
         cv2.imwrite(wavelet_denoised_path, (wavelet_denoised * 255).astype(np.uint8))
         step_paths.append(("Wavelet Denoised Image", wavelet_denoised_path))
 
+        ic(wavelet_denoised, wavelet_denoised_path)
+
         laplace, thresh, thresh_path = extract_features(inpainted)
         step_paths.append(("Threshold Image", thresh_path))
+
+        ic(laplace, thresh, thresh_path)
 
         # response["feature_extraction"].update(
         #     {
@@ -330,8 +375,15 @@ def process_image(request):
         #     }
         # )
 
+        alert_frontend("Generating report...", 80)
+        time.sleep(1)
+
         if operations.get("report_format") == "PDF":
             response["pdf"] = generate_pdf_report(step_paths)
+
+        ic(response)
+
+        alert_frontend("Process complete!", 100)
 
         return JsonResponse(response)
 
@@ -388,4 +440,3 @@ def extract_features(inpainted):
     thresh_path = "temp_thresh.jpg"
     cv2.imwrite(thresh_path, thresh)
     return laplace, thresh, thresh_path
-

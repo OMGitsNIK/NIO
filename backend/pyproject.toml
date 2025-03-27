@@ -20,6 +20,8 @@ scikit-image = "^0.25.2"
 pyjwt = "^2.10.1"
 pywavelets = "^1.8.0"
 psycopg2-binary = "^2.9.10"
+matplotlib = "^3.10.1"
+weasyprint = "^64.1"
 
 
 [build-system]

@@ -5,6 +5,7 @@ import base64
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as mcolors
+from icecream import ic
 
 
 
@@ -34,16 +35,20 @@ def generate_pdf_report(step_paths):
     chart_base64 = generate_chart()
 
     image_rows = ""
-    for label, path in step_paths:
+    ic(step_paths)
+    for i, (label, path) in enumerate(step_paths):
+        ic(label)
         with open(path, "rb") as image_file:
+            ic(image_file)
             image_base64 = base64.b64encode(image_file.read()).decode("utf-8")
+            ic(image_base64[:12])
         image_rows += f"""
         <tr>
             <td>{label}</td>
             <td><img src="data:image/jpeg;base64,{image_base64}" alt="{label}"></td>
         </tr>
         """
-
+    ic(image_rows)
     html_content = f"""
     <html>
       <head>
@@ -73,24 +78,24 @@ def generate_pdf_report(step_paths):
             <tr>
               <th>Label</th>
               <th>Image</th>
-            
+
             </tr>
           </thead>
-        
+
           <tbody>
             {image_rows}
 
         </tbody>
 
-         
+
         </table>
 
       </body>
     </html>
     """
+    ic(html_content[:12])
 
     HTML(string=html_content).write_pdf("output.pdf")
-
     with open("output.pdf", "rb") as pdf_file:
         pdf_bytes = pdf_file.read()
         return base64.b64encode(pdf_bytes).decode()
