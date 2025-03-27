@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Filter, Grid } from "lucide-react"
+import { useEffect, useState } from "react"
+import { Filter } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,9 @@ export function DashboardHeader() {
         month: 'long',
         year: '2-digit'
     })
+	useEffect(()=>{
+setDate(new Date())
+	},[])
 
     return (
 					<header className="border-b bg-background">

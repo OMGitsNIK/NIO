@@ -20,7 +20,7 @@ const FileDropzone: React.FC<FileDropzoneProps> = ({ onFile }) => {
 	};
 
 	const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-		const selectedFile = event.target.files[0];
+		const selectedFile = event.target.files?event.target.files[0]:null;
 		if (selectedFile) {
 			setFile(selectedFile);
 			onFile(selectedFile); // Call the onFile prop with the selected file

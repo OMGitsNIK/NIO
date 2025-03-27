@@ -16,11 +16,11 @@ import type { Dataset } from "@/types/db";
 import { CONFIG } from "@/lib/config";
 import { format } from "date-fns";
 
-interface DatasetViewProps {
-	datasets: Dataset[];
-	onEditDataset: (id: number, updatedDataset: Partial<Dataset>) => void;
-	onDeleteDataset: (id: number) => void;
-}
+// interface DatasetViewProps {
+// 	datasets: Dataset[];
+// 	onEditDataset: (id: number, updatedDataset: Partial<Dataset>) => void;
+// 	onDeleteDataset: (id: number) => void;
+// }
 
 export function DatasetView({ datasets, onEditDataset, onDeleteDataset }: any) {
 	return (

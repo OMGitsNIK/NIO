@@ -112,7 +112,7 @@ export default function AnalyzePage() {
             </div>
           </main>
        
-        <AnalysisSidebar file={file} />
+        <AnalysisSidebar  file={file} />
       </div>
     )
   }
@@ -162,7 +162,7 @@ export default function AnalyzePage() {
                       e.stopPropagation()
                       const input = document.querySelector('input[type="file"]')
                       if (input) {
-                        input.click()
+                        (input as any).click()
                       }
                     }}
                   >
