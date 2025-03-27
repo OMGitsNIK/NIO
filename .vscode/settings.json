@@ -1,3 +1,10 @@
 {
-  "editor.formatOnSave": false
+  "[typescript]": {
+			"editor.defaultFormatter": "biomejs.biome"
+		},
+  "deno.enablePaths": [
+    "supabase/functions"
+  ],
+  "deno.lint": true,
+  "deno.unstable": true
 }
