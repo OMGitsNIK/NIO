@@ -1,0 +1,45 @@
+-------------------------Implemented ------------------------------
+
+Dehazing
+1) Underwater with sponges (probably)
+2) Underwater not restricted to sponges
+3) Above water foggy images
+
+Sponges
+1) Many sponges and corals
+2) AI generated reefs
+3) Octopus 
+4) Water split
+
+
+
+
+
+
+-------------------Suggested (ChatGPT)-------------------
+
+Dehazing
+1) Foggy Underwater Coral Scene: Test with a dense fog covering coral formations.
+2) Suspended Particles: Use an underwater image with visible particles, creating a blurred effect.
+3) Above-Water Foggy Coastal Image: Apply dehazing to a coastal image with high fog density.
+4) High Turbidity Water: Use an underwater scene in murky water to test visibility enhancement.
+5) Mixed Haze with Coral and Sponges: Process a dense scene with multiple marine objects.
+6) Shallow Water Coral Image: Assess minor haze removal without affecting clarity.
+7) Artificial Lighting in Hazy Water: Test dehazing effectiveness on images with artificial light scattering.
+8) Low Light Foggy Image: Dehaze a low-light underwater image with minimal natural light.
+9) Surface Water Split View: Test a split image with both above- and below-water visibility.
+10) Dense Particle Cloud: Test dehazing on a near-zero visibility scene due to dense particles.
+
+
+
+Sponges
+1) Single Sponge Detection: Confirm detection of a single, large sponge.
+2) Multiple Sponge Detection: Use an image with several sponges to test accurate identification.
+3) No Sponges: Test on an image with coral only to check for false positives.
+4) Coral and Sponge Mixture: Verify detection in a mixed habitat with both coral and sponges.
+5) Small and Faint Sponges: Analyze an image with small or faintly visible sponges.
+6) Occluded Sponges: Process an image where sponges are partially obscured.
+7) High Light Scattering: Test detection robustness in high light scattering scenes.
+8) Different Sponge Shapes: Use images showing sponges of varying colors and shapes.
+9) Minimal Light Scene: Test detection in a low-light or dim underwater setting.
+10) Above-Water Non-Underwater Image: Ensure the algorithm ignores above-water sponges.
