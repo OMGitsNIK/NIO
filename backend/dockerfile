@@ -14,6 +14,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY ./ /code/
 
-EXPOSE 80
+EXPOSE 5000
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:5000"]
