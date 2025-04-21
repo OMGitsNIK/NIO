@@ -1,16 +1,15 @@
 services:
   backend:
-      build: ./backend  # Build the image using the Dockerfile in the current directory
-      ports:
-        - "5000:5000"  # Map host port 80 to container port 80
-  web:
-      build: ./web  # Build the image using the Dockerfile in the current directory
-      ports:
-        - "3000:3000"  # Map host port 80 to container port 80
-      depends_on:
-        - backend
+    build: ./backend # Build the image using the Dockerfile in the current directory
+    ports:
+      - "5000:5000" # Map host port 80 to container port 80
+  # web:
+  #     build: ./web  # Build the image using the Dockerfile in the current directory
+  #     ports:
+  #       - "3000:3000"  # Map host port 80 to container port 80
+  #     depends_on:
+  #       - backend
 
-    
   # typesense:
   #   image: typesense/typesense:27.1
   #   restart: always
@@ -21,8 +20,5 @@ services:
   #     - typesense_data:/data
   #   ports:
   #     - "8108:8108"
-
-
 # volumes:
 #   typesense_data:
-
