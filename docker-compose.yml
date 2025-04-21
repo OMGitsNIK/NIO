@@ -2,11 +2,11 @@ services:
   backend:
       build: ./backend  # Build the image using the Dockerfile in the current directory
       ports:
-        - "80:5000"  # Map host port 80 to container port 80
+        - "5000:5000"  # Map host port 80 to container port 80
   web:
       build: ./web  # Build the image using the Dockerfile in the current directory
       ports:
-        - "80:3000"  # Map host port 80 to container port 80
+        - "3000:3000"  # Map host port 80 to container port 80
       depends_on:
         - backend
 
