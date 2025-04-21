@@ -9,4 +9,7 @@ node_modules/
 /blob-report/
 /playwright/.cache/
 backend/venv/
-backend/.env/
+
+node_modules/uuid/dist/nil.js
+**/__pycache__/*.pyc
+**/.next
