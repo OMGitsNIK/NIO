@@ -16,9 +16,9 @@ export const options: NextAuthOptions = {
           throw new Error("Email and password are required");
         }
         try {
-          console.log(process.env.DJANGO_API_URL);
+          console.log(process.env.NEXT_PUBLIC_DJANGO_API_URL);
           const response = await axios.post(
-            `${process.env.DJANGO_API_URL}/api/auth/`,
+            `${process.env.NEXT_PUBLIC_DJANGO_API_URL}/api/auth/`,
             {
               email: credentials.email,
               password: credentials.password,
