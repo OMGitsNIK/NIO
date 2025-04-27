@@ -39,16 +39,35 @@ def alert_frontend(message: str, progress: int):
     sse_clients.append({"message": message, "progress": progress})
     print(f"Alerted Frontend: {message} ({progress}%)")
 
-
 @csrf_exempt
-def dataset(request,user):
+def dataset_delete(request, dataset_id: int):
+    if request.method == "DELETE":
+        try:
+            dataset_bridge = get_object_or_404(models.DatasetBridge, dataset_id=dataset_id)
+            dataset = dataset_bridge.dataset
+            dataset_bridge.delete()
+            dataset.delete()
+            return JsonResponse({"message": f"Dataset {dataset_id} deleted successfully"}, status=200)
+        except Exception as e:
+            logging.error(f"Delete failed: {e}")
+            return JsonResponse({"error": "Failed to delete dataset"}, status=500)
+    else:
+        return JsonResponse({"error": "Invalid method"}, status=405)
+
+
+# def users
+@csrf_exempt
+def dataset(request,user_id):
     if request.method == "GET":
+        user=get_object_or_404(models.User,id=user_id)
+        print(user)
         datasets = models.DatasetBridge.objects.all().values(
             "dataset_id",
             "dataset__name",
             "dataset__description",
             "dataset__visibility",
             "dataset__created_by_id",
+            "dataset__created_by_id__name",
             "dataset__created_at",
         )
 
@@ -75,9 +94,9 @@ def dataset(request,user):
         ic("in post")
         ic(request.body)
         try:
-            ic(request.POST.get("user_id"))
-            user = get_object_or_404(models.User, id=request.POST.get("user_id"))
-
+            user = get_object_or_404(models.User, id=user_id)
+            ic(user)
+            ic()
             newDataset = models.Dataset(
                 name=request.POST.get("name"),
                 visibility=request.POST.get("visibility", "private"),
@@ -89,11 +108,14 @@ def dataset(request,user):
 
             newDBBridge = models.DatasetBridge(dataset=newDataset, version=0)
             newDBBridge.save()
+
+            newJoinDSnUSer=models.DatasetUsersBridge(access='read', dataset_bridge=newDBBridge,user=user)
+            newJoinDSnUSer.save()
             ic(newDataset)
             ic(f"Saved Dataset, ID:  {newDBBridge.id}")
 
             return JsonResponse(
-                {"result": f"Dataset {newDataset.id} Added Successfully"}
+                {"result": f"Dataset {newDataset.id} Added Successfully","id":newDataset.id}
             )
         except Exception as e:
             ic(e)
@@ -103,23 +125,32 @@ def dataset(request,user):
 @csrf_exempt
 def dataset_id(request, id):
     if request.method == "GET":
+        user_id = request.GET.get("user_id")
+        ic(user_id)
         dataset = get_object_or_404(models.DatasetBridge, dataset_id=id)
+        ic(dataset)
+        if user_id:
+            bridge_user = models.DatasetUsersBridge.objects.filter(
+                dataset_bridge=dataset, user_id=user_id
+            ).first()
+            ic(bridge_user)
+            if not bridge_user:
+                return JsonResponse({"error": "Access Denied"}, status=403)
 
         snapshots = []
         for snapshot in models.DatasetSnapshotBridge.objects.filter(
             dataset_bridge=dataset
         ).values("snapshot_id"):
-            snapshot = models.Snapshot.objects.get(id=snapshot["snapshot_id"])
+            snapshot_obj = models.Snapshot.objects.get(id=snapshot["snapshot_id"])
             snapshots.append(
                 {
-                    "id": snapshot.id,
-                    "src": "/v1/bucket/" + str(snapshot.media.id),
-                    "created_on": snapshot.created_on,
-                    "version": snapshot.version,
+                    "id": snapshot_obj.id,
+                    "src": f"/v1/bucket/{snapshot_obj.media.id}",
+                    "created_on": snapshot_obj.created_on,
+                    "version": snapshot_obj.version,
                 }
             )
 
-        print(dataset)
         return JsonResponse(
             {
                 "name": dataset.dataset.name,
@@ -197,6 +228,18 @@ def snapshot(request):
         {"status": "error", "message": "Invalid request method"}, status=405
     )
 
+@csrf_exempt
+def delete_snapshot(request, id):
+        if request.method == "DELETE":
+            try:
+                snapshot = get_object_or_404(models.Snapshot, id=id)
+                snapshot.delete()
+                return JsonResponse({"status": "success", "message": "Snapshot deleted successfully"}, status=200)
+            except Exception as e:
+                logging.error(f"An error occurred while deleting the snapshot: {e}")
+                return JsonResponse({"status": "error", "message": "An error occurred while deleting the snapshot"}, status=500)
+        return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
+
 
 @csrf_exempt
 def bucket(request):
@@ -238,8 +281,9 @@ def bucket(request):
 
 
 def bucket_id(request, id):
+    ic(id)
     bucket_file = get_object_or_404(models.Bucket, id=id)
-
+    ic(bucket_file)
     if request.method == "DELETE":
         bucket_file.delete()
         return JsonResponse({"message": f"Successfully Deleted {id}"}, safe=False)
@@ -249,7 +293,9 @@ def bucket_id(request, id):
             max_size = int(request.GET.get("size", 2000))
             quality = int(request.GET.get("quality", 100))
             mime_type, _ = mimetypes.guess_type(bucket_file.file.url)
-
+            ic(request.method)
+            ic(request.GET)
+            ic(bucket_file)
             if (mime_type and mime_type.startswith("image/")):
                 bucket_file_actual_image = Image.open(bucket_file.file.path)
                 original_width, original_height = bucket_file_actual_image.size
