@@ -41,7 +41,7 @@ def alert_frontend(message: str, progress: int):
 
 
 @csrf_exempt
-def dataset(request):
+def dataset(request,user):
     if request.method == "GET":
         datasets = models.DatasetBridge.objects.all().values(
             "dataset_id",
