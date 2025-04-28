@@ -2,13 +2,12 @@
 "use client";
 
 import axiosInstance from "@/lib/axios";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { Button } from "@/components/ui/button";
 import {
   AlertCircleIcon,
-  BrainCog,
   ImageIcon,
   Trash2,
   UploadIcon,
@@ -16,6 +15,13 @@ import {
 } from "lucide-react";
 import { CONFIG } from "@/lib/config";
 import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { AxiosError } from "axios";
 
 interface Snapshot {
   id: string;
@@ -233,7 +239,6 @@ const useFileUpload = (
 
   const getInputProps = useCallback(
     (): React.InputHTMLAttributes<HTMLInputElement> => ({
-      ref: fileInputRef,
       type: "file",
       style: { display: "none" },
       accept: accept,
@@ -293,7 +298,7 @@ const FileUploadArea: React.FC<FileUploadAreaProps> = ({
   } = fileUploadHandlers;
 
   return (
-    <div className="mt-8 border-t pt-6">
+    <div className="">
       <h3 className="text-xl font-semibold mb-4">Upload New Snapshots</h3>
       <div className="flex flex-col gap-3">
         <div
@@ -464,16 +469,26 @@ const FileUploadArea: React.FC<FileUploadAreaProps> = ({
 
 interface SnapshotListItemProps {
   snapshot: Snapshot;
+  onSnapshotDeleted: (snapshotId: string) => void; // Add this prop
 }
 
-const SnapshotListItem: React.FC<SnapshotListItemProps> = ({ snapshot }) => {
+const SnapshotListItem: React.FC<SnapshotListItemProps> = ({
+  snapshot,
+  onSnapshotDeleted, // Destructure the new prop
+}) => {
+  const [isDeleting, setIsDeleting] = useState(false); // Add loading state for deletion
+
   const handleDeleteSnapshot = async (id: string) => {
+    setIsDeleting(true); // Set deleting state
     try {
       await axiosInstance.delete(`/v1/snapshot/${id}`);
       toast.success("Snapshot deleted successfully");
-      window.location.reload();
+      // Instead of reloading, call the parent callback
+      onSnapshotDeleted(id);
     } catch {
       toast.error("Failed to delete snapshot");
+    } finally {
+      setIsDeleting(false); // Reset deleting state
     }
   };
 
@@ -496,8 +511,32 @@ const SnapshotListItem: React.FC<SnapshotListItemProps> = ({ snapshot }) => {
             e.stopPropagation();
             handleDeleteSnapshot(snapshot.id);
           }}
+          disabled={isDeleting} // Disable button while deleting
         >
-          <Trash2 />
+          {isDeleting ? (
+            <svg
+              className="animate-spin h-4 w-4 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="4"
+              ></circle>
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+              ></path>
+            </svg>
+          ) : (
+            <Trash2 />
+          )}
         </Button>
 
         <p>
@@ -518,6 +557,12 @@ export default function DatasetPage() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
+  // State for analysis process
+  const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+  // You'll likely need state to select a pipeline
+  const [selectedPipelineId] = useState<string | null>(null); // Placeholder
+
   const maxSizeMB = 100;
   const maxSize = maxSizeMB * 1024 * 1024;
   const maxFiles = 10;
@@ -531,15 +576,25 @@ export default function DatasetPage() {
       maxFiles,
     });
 
+  // Function to fetch the dataset details
   const fetchDataset = useCallback(async () => {
     if (!datasetId) return;
 
     setLoading(true);
     setFetchError(null);
     try {
+      // Assuming your backend endpoint for a single dataset by ID is v1/dataset/{id}
       const response = await axiosInstance.get<Dataset>(
-        `v1/dataset/${datasetId}`,
+        `/v1/dataset/${datasetId}`,
+        {
+          // Pass user_id as a query parameter if needed for access control
+          params: { user_id: session?.user?.id },
+        },
       );
+      // Adjust the data structure if your GET /v1/dataset/{id} returns it differently
+      // The current backend code for GET /v1/dataset/{id} returns a different structure
+      // You might need to adjust this based on your actual API design
+      // For now, assuming the structure matches the Dataset interface for simplicity
       setDataset(response.data);
     } catch (err) {
       setFetchError("Failed to fetch dataset details.");
@@ -547,11 +602,28 @@ export default function DatasetPage() {
     } finally {
       setLoading(false);
     }
-  }, [datasetId]);
+  }, [datasetId, session?.user?.id]); // Add session.user.id as a dependency
 
+  // Fetch dataset on initial load and when datasetId or user ID changes
   useEffect(() => {
-    fetchDataset();
-  }, [fetchDataset]);
+    if (session?.user?.id) {
+      // Only fetch if user ID is available
+      fetchDataset();
+    }
+  }, [fetchDataset, session?.user?.id]);
+
+  // Function to handle snapshot deletion from child component
+  const handleSnapshotDeleted = useCallback((deletedSnapshotId: string) => {
+    setDataset((prevDataset) => {
+      if (!prevDataset) return null;
+      return {
+        ...prevDataset,
+        snapshots: prevDataset.snapshots.filter(
+          (snapshot) => snapshot.id !== deletedSnapshotId,
+        ),
+      };
+    });
+  }, []);
 
   const handleUpload = async () => {
     if (files.length === 0 || !datasetId || !session?.user.id) {
@@ -586,17 +658,19 @@ export default function DatasetPage() {
         return {
           status: "fulfilled",
           id: uploadableFile.id,
-          responseData: response.data,
+          responseData: response.data, // Assuming backend returns some relevant data
         };
-      } catch (error: any) {
-        const errorMessage =
-          error.response?.data?.message ||
-          `Failed to upload ${uploadableFile.file.name}`;
-        return {
-          status: "rejected",
-          id: uploadableFile.id,
-          error: errorMessage,
-        };
+      } catch (error: unknown) {
+        if (error instanceof AxiosError) {
+          const errorMessage =
+            error.response?.data?.message ||
+            `Failed to upload ${uploadableFile.file.name}`;
+          return {
+            status: "rejected",
+            id: uploadableFile.id,
+            error: errorMessage,
+          };
+        }
       }
     });
 
@@ -618,6 +692,7 @@ export default function DatasetPage() {
       setUploadError(
         `Some files failed to upload: ${errorMessages.join(", ")}`,
       );
+      // Remove successfully uploaded files from the upload list
       successfulUploads.forEach((result) => {
         if (result.status === "fulfilled" && result.value?.id) {
           fileUploadHandlers.removeFile(result.value.id);
@@ -625,17 +700,71 @@ export default function DatasetPage() {
       });
     } else {
       setUploadError(null);
+      // Clear all files from the upload list if all uploads were successful
       if (fileUploadHandlers.clearFiles) {
         fileUploadHandlers.clearFiles();
       } else {
         files.forEach((f) => fileUploadHandlers.removeFile(f.id));
       }
+      toast.success(
+        `${successfulUploads.length} file(s) uploaded successfully.`,
+      );
     }
 
+    // Refetch the dataset to get the updated list of snapshots
     if (successfulUploads.length > 0) {
-      await fetchDataset();
+      fetchDataset();
     }
   };
+
+  // --- Function to handle the Analyze button click ---
+  const handleAnalyzeClick = async () => {
+    if (!datasetId || !session?.user?.id) {
+      setAnalysisError("Dataset ID or User ID is missing.");
+      return;
+    }
+
+    // TODO: Implement logic to select a pipeline ID
+    // For now, using a placeholder. You need a UI element (like a dropdown)
+    // to allow the user to choose a pipeline and update selectedPipelineId state.
+    if (!selectedPipelineId) {
+      setAnalysisError("Please select a pipeline to analyze with.");
+      // You might want to open a modal or show a selection UI here
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError(null);
+
+    try {
+      // Make the POST request to your AnalyzeDataset endpoint
+      const response = await axiosInstance.post("/v1/analyze_dataset/", {
+        // Adjust URL if needed
+        dataset_id: datasetId,
+        pipeline_id: selectedPipelineId, // Use the selected pipeline ID
+        user_id: session.user.id,
+      });
+
+      console.log("Analysis request sent:", response.data);
+      // The actual analysis results will likely come via SSE,
+      // so you might not need to do much with this immediate response
+      // other than confirming the request was accepted.
+
+      // You would typically start listening for SSE events here or
+      // have a global SSE listener that updates relevant state.
+    } catch (error: unknown) {
+      if (error instanceof AxiosError) {
+        const errorMessage =
+          error.response?.data?.error || "Failed to start dataset analysis.";
+        setAnalysisError(errorMessage);
+      }
+      console.error("Analyze dataset error:", error);
+    } finally {
+      setIsAnalyzing(false); // Set to false when the *request* is complete.
+      // The actual analysis running state will be managed by SSE.
+    }
+  };
+  // --- End of Analyze button click handler ---
 
   if (loading && !dataset) {
     return <div className="p-6 text-center">Loading dataset details...</div>;
@@ -657,45 +786,82 @@ export default function DatasetPage() {
     <div className="p-6 lg:p-8 max-w-6xl mx-auto">
       <div className="mb-6 pb-4 border-b flex justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">{dataset.name}</h2>
+          <h2 className="text-3xl font-bold mb-2">{dataset.name}</h2>{" "}
+          {/* Adjusted field name */}
           <p className="text-gray-600 dark:text-gray-400 mb-2">
-            {dataset.description || "No description provided."}
+            {dataset.description || "No description provided."}{" "}
+            {/* Adjusted field name */}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-300">
-            Created: {new Date(dataset.created_at).toLocaleString()}
+            Created: {new Date(dataset.created_at).toLocaleString()}{" "}
+            {/* Adjusted field name */}
           </p>
         </div>
-        <div>
-          <Button>Analyze</Button>
+        <div className="flex items-center space-x-2">
+          {" "}
+          {/* Added flex and spacing */}
+          {/* Add a UI element here to select a pipeline */}
+          {/* Example: <PipelineSelect onPipelineSelected={setSelectedPipelineId} /> */}
+          <Button
+            onClick={handleAnalyzeClick} // Attach the click handler
+            disabled={isAnalyzing} // Disable while analyzing or if no pipeline selected
+          >
+            {isAnalyzing ? "Analyzing..." : "Analyze"}
+          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>Add Snapshot</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <div className="hidden">
+                {" "}
+                {/* Consider making this visible */}
+                <DialogTitle>File Upload</DialogTitle>
+              </div>
+              <FileUploadArea
+                files={files}
+                isDragging={isDragging}
+                validationErrors={validationErrors}
+                fileUploadHandlers={fileUploadHandlers}
+                isUploading={isUploading}
+                uploadError={uploadError}
+                onUpload={handleUpload}
+                maxFiles={maxFiles}
+                maxSizeMB={maxSizeMB}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
+      {/* Display analysis error if any */}
+      {analysisError && (
+        <div className="mb-4 text-red-500">{analysisError}</div>
+      )}
+
       <div className="mb-6">
-        <h3 className="text-xl font-semibold mb-4">Existing Snapshots</h3>
+        <h3 className="text-xl font-semibold mb-4">
+          Existing Snapshots ({dataset.snapshots.length})
+        </h3>{" "}
+        {/* Added item count */}
         {dataset.snapshots.length === 0 ? (
           <p className="text-gray-500 italic">
             No snapshots have been uploaded yet.
           </p>
         ) : (
-          <ul className=" gap-2 grid grid-cols-3">
+          <ul className=" gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {" "}
+            {/* Improved grid responsiveness */}
             {dataset.snapshots.map((snapshot) => (
-              <SnapshotListItem key={snapshot.id} snapshot={snapshot} />
+              <SnapshotListItem
+                key={snapshot.id}
+                snapshot={snapshot}
+                onSnapshotDeleted={handleSnapshotDeleted} // Pass the callback here
+              />
             ))}
           </ul>
         )}
       </div>
-
-      <FileUploadArea
-        files={files}
-        isDragging={isDragging}
-        validationErrors={validationErrors}
-        fileUploadHandlers={fileUploadHandlers}
-        isUploading={isUploading}
-        uploadError={uploadError}
-        onUpload={handleUpload}
-        maxFiles={maxFiles}
-        maxSizeMB={maxSizeMB}
-      />
     </div>
   );
 }

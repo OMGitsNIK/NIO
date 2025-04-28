@@ -4,9 +4,9 @@ import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
-export function NavBar() {
+function Nav() {
   const [query, setQuery] = useState("");
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -18,7 +18,6 @@ export function NavBar() {
       router.push(`?${params.toString()}`);
     }
   };
-
   return (
     <div className="w-full h-full border-b">
       <div className="relative w-96 h-full">
@@ -42,5 +41,12 @@ export function NavBar() {
         </button>
       </div>
     </div>
+  );
+}
+export function NavBar() {
+  return (
+    <Suspense>
+      <Nav />
+    </Suspense>
   );
 }

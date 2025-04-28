@@ -6,26 +6,8 @@ import { cn } from "@/lib/utils";
 import { Space_Mono } from "next/font/google";
 import axiosInstance from "@/lib/axios";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
-import {
-  BoltIcon,
-  BrainCog,
-  ChevronDownIcon,
-  CopyPlusIcon,
-  FilesIcon,
-  Layers2Icon,
-  Trash2,
-  TrashIcon,
-} from "lucide-react";
+import { BrainCog, FilesIcon, Trash2 } from "lucide-react";
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { CONFIG } from "@/lib/config";
 
@@ -159,7 +141,7 @@ export default function Page() {
                 src={
                   CONFIG.SERVER_URL +
                   "/v1/bucket/" +
-                  data.snapshots[0].media__id
+                  (data.snapshots.length > 0 ? data.snapshots[0].media__id : "")
                 }
                 alt={data.dataset__name}
                 className="h-auto w-full aspect-video object-cover"
@@ -179,7 +161,7 @@ export default function Page() {
                 <Button
                   size="icon"
                   className="absolute size-8 top-1 right-10 delay-75 duration-700 group-hover:opacity-100 opacity-0 transition-all"
-                  onClick={(e) => {
+                  onClick={() => {
                     router.push(
                       `/dashboard/dataset/${data.dataset_id}/analyze`,
                     );

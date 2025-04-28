@@ -61,7 +61,7 @@ export const Sidebar = () => {
           alt="Logo"
           width={40}
           height={40}
-          className="bg-gradient-to-br from-teal-400 to-purple-500"
+          className="rounded-full"
         />
         <h1 className="text-lg font-medium tracking-tight text-gray-900">
           Sponge Analyzer

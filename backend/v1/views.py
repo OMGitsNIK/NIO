@@ -439,34 +439,6 @@ def process_image(request):
 
 
 
-def convert_image_to_opencv(image):
-    image_bytes = image.read()
-    nparr = np.frombuffer(image_bytes, np.uint8)
-    return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-
-def denoise_image(img):
-    denoised = cv2.fastNlMeansDenoising(img)
-    denoised_path = "temp_denoised.jpg"
-    cv2.imwrite(denoised_path, denoised)
-    return denoised, denoised_path
-
-
-def deconvolve_image(denoised):
-    pywt.dwt2(denoised, "haar")
-    psf = np.ones((5, 5)) / 25
-    deconvolved = cv2.filter2D(denoised, -1, psf)
-    deconvolved_path = "temp_deconvolved.jpg"
-    cv2.imwrite(deconvolved_path, deconvolved)
-    return deconvolved, deconvolved_path
-
-
-def apply_bilateral_filter(deconvolved):
-    bilateral = cv2.bilateralFilter(deconvolved, 9, 75, 75)
-    bilateral_path = "temp_bilateral.jpg"
-    cv2.imwrite(bilateral_path, bilateral)
-    return bilateral, bilateral_path
-
 
 def inpaint_image(bilateral, img):
     mask = np.zeros(img.shape[:2], dtype=np.uint8)
@@ -479,10 +451,200 @@ def inpaint_image(bilateral, img):
     return inpainted, inpainted_path
 
 
-def extract_features(inpainted):
-    laplace = cv2.Laplacian(inpainted, cv2.CV_64F).var()
-    gray = cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY)
-    _, thresh = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    thresh_path = "temp_thresh.jpg"
-    cv2.imwrite(thresh_path, thresh)
-    return laplace, thresh, thresh_path
+
+
+@csrf_exempt
+def AnalyzeDataset(request):
+    """
+    Analyzes a dataset by executing a specified pipeline of operations on each image.
+    Notifies the frontend about the progress and results via SSE.
+    """
+    if request.method == "POST":
+        try:
+            # Extract dataset ID and pipeline ID from the request body
+            data = json.loads(request.body)
+            dataset_id = data.get("dataset_id")
+            pipeline_id = data.get("pipeline_id")
+            user_id = data.get("user_id") # Assuming user_id is also sent
+
+            if not dataset_id or not pipeline_id or not user_id:
+                 return JsonResponse({"error": "dataset_id, pipeline_id, and user_id are required"}, status=400)
+
+            # Simulate adding to a queue and starting the process
+            alert_frontend(f"Starting analysis for dataset {dataset_id} using pipeline {pipeline_id}...", 5)
+
+            # Get the dataset bridge and pipeline
+            dataset_bridge = get_object_or_404(models.DatasetBridge, dataset_id=dataset_id)
+            pipeline = get_object_or_404(models.Pipeline, id=pipeline_id)
+            user = get_object_or_404(models.User, id=user_id)
+
+
+            # Get ordered operations associated with the pipeline
+            pipeline_operations = models.PipelineOperationBridge.objects.filter(
+                pipeline=pipeline
+            ).order_by('operation__order').select_related('operation') # Order by operation order
+
+            if not pipeline_operations.exists():
+                 alert_frontend(f"Pipeline {pipeline_id} has no operations defined.", 100)
+                 return JsonResponse({"message": f"Pipeline {pipeline_id} has no operations defined."}, status=200)
+
+
+            # Get all snapshots associated with the dataset
+            dataset_snapshots = models.DatasetSnapshotBridge.objects.filter(
+                dataset_bridge=dataset_bridge
+            ).select_related('snapshot__media') # Optimize query
+
+            total_snapshots = dataset_snapshots.count()
+            if total_snapshots == 0:
+                 alert_frontend("No snapshots found in the dataset.", 100)
+                 return JsonResponse({"message": "No snapshots found in the dataset."}, status=200)
+
+            total_operations = total_snapshots * pipeline_operations.count()
+            current_operation_count = 0
+            analysis_results = []
+
+            # Iterate through snapshots and execute pipeline operations
+            for i, ds_bridge in enumerate(dataset_snapshots):
+                snapshot = ds_bridge.snapshot
+                media_file = snapshot.media.file
+
+                try:
+                    # Open the image using PIL and convert to OpenCV format
+                    pil_image = Image.open(media_file)
+                    # Ensure image is in a format OpenCV can handle (e.g., BGR)
+                    if pil_image.mode == 'RGBA':
+                        pil_image = pil_image.convert('RGB')
+                    opencv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
+
+                    snapshot_results = {
+                        "snapshot_id": str(snapshot.id),
+                        "media_name": snapshot.media.name,
+                        "operations": []
+                    }
+
+                    # Execute each operation in the pipeline for the current snapshot
+                    for j, po_bridge in enumerate(pipeline_operations):
+                        pipeline_operation = po_bridge.operation
+                        current_operation_count += 1
+
+                        # Simulate creating a new Operation instance for this specific snapshot execution
+                        new_operation = models.Operation(
+                            type=pipeline_operation.type,
+                            status='running', # Set status to running
+                            order=pipeline_operation.order,
+                            transferred_attributes=pipeline_operation.transferred_attributes,
+                            # reference will be set after creating Estimate/Filter
+                        )
+
+                        # Simulate creating related Estimate or Filter based on operation type
+                        if pipeline_operation.type == 'estimate':
+                            # Simulate creating an Estimate
+                            new_estimate = models.Estimate(
+                                name=f"Estimate for {snapshot.media.name} - {pipeline_operation.id}",
+                                parameters=pipeline_operation.transferred_attributes, # Use transferred_attributes as parameters
+                                output={} # Initialize output
+                            )
+                            new_estimate.save()
+                            new_operation.reference = new_estimate.id
+                            new_operation.save()
+
+                            # Simulate performing the estimate (e.g., calculate average intensity)
+                            # In a real scenario, this would involve calling the actual estimation logic
+                            estimated_value = np.mean(opencv_image) # Simple example: average intensity
+                            new_estimate.output = {"average_intensity": float(estimated_value)}
+                            new_estimate.save()
+
+                            # Update operation status
+                            new_operation.status = 'complete'
+                            new_operation.save()
+
+                            snapshot_results["operations"].append({
+                                "operation_id": str(new_operation.id),
+                                "type": new_operation.type,
+                                "status": new_operation.status,
+                                "estimate_id": str(new_estimate.id),
+                                "output": new_estimate.output
+                            })
+
+                        elif pipeline_operation.type == 'filter':
+                            # Simulate creating a Filter (requires a Bucket output)
+                            # This is a placeholder; a real filter would produce an image and save it to a Bucket
+                            alert_frontend(f"Warning: Filter operation simulation is a placeholder.", -1) # Use -1 for warnings
+
+                            # Simulate creating a placeholder Bucket output
+                            placeholder_bucket = models.Bucket(
+                                name=f"Filtered_{snapshot.media.name}_{pipeline_operation.id}",
+                                created_by=user,
+                                # file field would be set here in a real implementation
+                            )
+                            placeholder_bucket.save()
+
+                            new_filter = models.Filter(
+                                name=f"Filter for {snapshot.media.name} - {pipeline_operation.id}",
+                                parameters=pipeline_operation.transferred_attributes,
+                                output=placeholder_bucket # Link to the placeholder bucket
+                            )
+                            new_filter.save()
+                            new_operation.reference = new_filter.id
+                            new_operation.save()
+
+                            # Simulate filter execution (no actual image processing here)
+                            new_operation.status = 'complete' # Simulate completion
+                            new_operation.save()
+
+                            snapshot_results["operations"].append({
+                                "operation_id": str(new_operation.id),
+                                "type": new_operation.type,
+                                "status": new_operation.status,
+                                "filter_id": str(new_filter.id),
+                                # No output field for filter in results, output is in the Bucket
+                            })
+
+
+                        # Link the snapshot to the newly created operation
+                        models.SnapshotOperationBridge.objects.create(
+                            snapshot=snapshot,
+                            operation=new_operation
+                        )
+
+                        # Update frontend with progress after each operation
+                        progress_per_operation = 90 / total_operations if total_operations > 0 else 90
+                        current_progress = 5 + int(current_operation_count * progress_per_operation)
+                        alert_frontend(f"Processing snapshot {i + 1}/{total_snapshots}, operation {j + 1}/{pipeline_operations.count()}...", current_progress)
+                        time.sleep(0.1) # Small delay to simulate work
+
+                    analysis_results.append(snapshot_results)
+
+                except Exception as img_e:
+                    logging.error(f"Error processing image {snapshot.media.name}: {img_e}")
+                    snapshot_results = {
+                        "snapshot_id": str(snapshot.id),
+                        "media_name": snapshot.media.name,
+                        "error": f"Failed to process image: {img_e}"
+                    }
+                    analysis_results.append(snapshot_results)
+                    # Continue processing other images
+
+            # Analysis complete
+            alert_frontend("Dataset analysis complete.", 100)
+
+            return JsonResponse({"status": "success", "results": analysis_results}, status=200)
+
+        except models.DatasetBridge.DoesNotExist:
+             alert_frontend(f"Dataset with ID {dataset_id} not found.", 100)
+             return JsonResponse({"error": f"Dataset with ID {dataset_id} not found"}, status=404)
+        except models.Pipeline.DoesNotExist:
+             alert_frontend(f"Pipeline with ID {pipeline_id} not found.", 100)
+             return JsonResponse({"error": f"Pipeline with ID {pipeline_id} not found"}, status=404)
+        except models.User.DoesNotExist:
+             alert_frontend(f"User with ID {user_id} not found.", 100)
+             return JsonResponse({"error": f"User with ID {user_id} not found"}, status=404)
+        except json.JSONDecodeError:
+            return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
+        except Exception as e:
+            logging.error(f"An error occurred during dataset analysis: {e}")
+            alert_frontend("An error occurred during analysis.", 100)
+            return JsonResponse({"error": "An error occurred during dataset analysis"}, status=500)
+
+    else:
+        return JsonResponse({"error": "Method not allowed"}, status=405)

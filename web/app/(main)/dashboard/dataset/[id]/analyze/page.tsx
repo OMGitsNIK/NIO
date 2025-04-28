@@ -1,12 +1,12 @@
 "use client";
 import { useParams } from "next/navigation";
 
-export default async function AnalyzePage() {
+export default function AnalyzePage() {
   const { id } = useParams();
 
   return (
     <div>
-      <h1>Analyze Dataset</h1>
+      <h1>Analyze Dataset {id}</h1>
     </div>
   );
 }

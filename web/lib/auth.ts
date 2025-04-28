@@ -42,6 +42,7 @@ export const options: NextAuthOptions = {
             accessToken: access_token,
           };
         } catch (error) {
+          console.error(error);
           throw new Error("Invalid email or password");
         }
       },
@@ -58,8 +59,8 @@ export const options: NextAuthOptions = {
       console.log(session);
       console.log(token);
       if (token) {
-        session.user.id = token.id;
-        session.user.accessToken = token.accessToken; // Pass the access token to session
+        session.user.id = token.id as string;
+        session.user.accessToken = token.accessToken as string;
       }
       return session;
     },
