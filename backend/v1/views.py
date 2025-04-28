@@ -60,15 +60,17 @@ def dataset_delete(request, dataset_id: int):
 @csrf_exempt
 def dataset(request,user_id):
     if request.method == "GET":
-        user=get_object_or_404(models.User,id=user_id)
-        print(user)
-        datasets = models.DatasetBridge.objects.all().values(
+        user = get_object_or_404(models.User, id=user_id)
+
+        datasets = models.DatasetBridge.objects.filter(
+            dataset__created_by=user  # 🚀 only datasets created by the user
+        ).values(
             "dataset_id",
             "dataset__name",
             "dataset__description",
             "dataset__visibility",
             "dataset__created_by_id",
-            "dataset__created_by_id__name",
+            "dataset__created_by__name",  # typo fix here too
             "dataset__created_at",
         )
 
@@ -77,19 +79,21 @@ def dataset(request,user_id):
             snapshots = models.Snapshot.objects.filter(
                 id__in=models.DatasetSnapshotBridge.objects.filter(
                     dataset_bridge__dataset_id=dataset["dataset_id"]
-                ).values_list("snapshot_id", flat=True)
+                ).values_list("snapshot_id", flat=True),
+                created_by=user  # ✨ snapshots also filtered by user
             ).values(
                 "id", "media__file", "location", "created_on", "version", "media__id"
             )
 
             for snapshot in snapshots:
-                snapshot["src"] = "/v1/bucket/" + str(snapshot["media__id"])
+                snapshot["src"] = f"/v1/bucket/{snapshot['media__id']}"
 
             dataset["snapshots"] = list(snapshots)[:1]
             dataset["num_items"] = len(list(snapshots))
             dataset_list.append(dataset)
 
         return JsonResponse(dataset_list, safe=False)
+
 
     if request.method == "POST":
         ic("in post")
