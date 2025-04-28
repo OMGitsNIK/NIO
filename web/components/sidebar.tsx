@@ -13,7 +13,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
 import axiosInstance from "@/lib/axios";
@@ -125,6 +125,7 @@ export const Sidebar = () => {
           <Activity className="mr-3 h-4 w-4" /> Analyze
         </Link>
       </div>
+      <Button onClick={() => signOut()}>Logout</Button>
     </div>
   );
 };
