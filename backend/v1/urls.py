@@ -13,4 +13,6 @@ urlpatterns = [
     path("dataset/<id>", views.dataset_id, name="dataset_id"),
     path("process_image", views.process_image, name="process_image"),
     path('events/', views.events, name='events'),
+    path('report/<report_id>', views.report_detail_view, name='report_detail'),
+
 ]

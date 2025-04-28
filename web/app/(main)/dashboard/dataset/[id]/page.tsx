@@ -1,6 +1,4 @@
-// src/app/datasets/[id]/page.tsx
 "use client";
-
 import axiosInstance from "@/lib/axios";
 import { useParams } from "next/navigation";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -17,7 +15,11 @@ import { CONFIG } from "@/lib/config";
 import { toast } from "sonner";
 import {
   Dialog,
+  DialogClose,
   DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
@@ -35,6 +37,16 @@ interface Dataset {
   description: string;
   created_at: string;
   snapshots: Snapshot[];
+  reports: {
+    report_id: string;
+    status: "completed" | "pending" | "failed";
+    created_at: string;
+    user: {
+      id: string;
+      name: string;
+    };
+    results_count: number;
+  }[];
 }
 
 interface UploadableFile {
@@ -469,26 +481,25 @@ const FileUploadArea: React.FC<FileUploadAreaProps> = ({
 
 interface SnapshotListItemProps {
   snapshot: Snapshot;
-  onSnapshotDeleted: (snapshotId: string) => void; // Add this prop
+  onSnapshotDeleted: (snapshotId: string) => void;
 }
 
 const SnapshotListItem: React.FC<SnapshotListItemProps> = ({
   snapshot,
-  onSnapshotDeleted, // Destructure the new prop
+  onSnapshotDeleted,
 }) => {
-  const [isDeleting, setIsDeleting] = useState(false); // Add loading state for deletion
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleDeleteSnapshot = async (id: string) => {
-    setIsDeleting(true); // Set deleting state
+    setIsDeleting(true);
     try {
       await axiosInstance.delete(`/v1/snapshot/${id}`);
       toast.success("Snapshot deleted successfully");
-      // Instead of reloading, call the parent callback
       onSnapshotDeleted(id);
     } catch {
       toast.error("Failed to delete snapshot");
     } finally {
-      setIsDeleting(false); // Reset deleting state
+      setIsDeleting(false);
     }
   };
 
@@ -511,7 +522,7 @@ const SnapshotListItem: React.FC<SnapshotListItemProps> = ({
             e.stopPropagation();
             handleDeleteSnapshot(snapshot.id);
           }}
-          disabled={isDeleting} // Disable button while deleting
+          disabled={isDeleting}
         >
           {isDeleting ? (
             <svg
@@ -557,11 +568,9 @@ export default function DatasetPage() {
   const [isUploading, setIsUploading] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
-  // State for analysis process
   const [isAnalyzing, setIsAnalyzing] = useState<boolean>(false);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
-  // You'll likely need state to select a pipeline
-  const [selectedPipelineId] = useState<string | null>(null); // Placeholder
+  const [selectedPipelineId] = useState<string | null>(null);
 
   const maxSizeMB = 100;
   const maxSize = maxSizeMB * 1024 * 1024;
@@ -576,25 +585,18 @@ export default function DatasetPage() {
       maxFiles,
     });
 
-  // Function to fetch the dataset details
   const fetchDataset = useCallback(async () => {
     if (!datasetId) return;
 
     setLoading(true);
     setFetchError(null);
     try {
-      // Assuming your backend endpoint for a single dataset by ID is v1/dataset/{id}
       const response = await axiosInstance.get<Dataset>(
         `/v1/dataset/${datasetId}`,
         {
-          // Pass user_id as a query parameter if needed for access control
           params: { user_id: session?.user?.id },
         },
       );
-      // Adjust the data structure if your GET /v1/dataset/{id} returns it differently
-      // The current backend code for GET /v1/dataset/{id} returns a different structure
-      // You might need to adjust this based on your actual API design
-      // For now, assuming the structure matches the Dataset interface for simplicity
       setDataset(response.data);
     } catch (err) {
       setFetchError("Failed to fetch dataset details.");
@@ -602,17 +604,14 @@ export default function DatasetPage() {
     } finally {
       setLoading(false);
     }
-  }, [datasetId, session?.user?.id]); // Add session.user.id as a dependency
+  }, [datasetId, session?.user?.id]);
 
-  // Fetch dataset on initial load and when datasetId or user ID changes
   useEffect(() => {
     if (session?.user?.id) {
-      // Only fetch if user ID is available
       fetchDataset();
     }
   }, [fetchDataset, session?.user?.id]);
 
-  // Function to handle snapshot deletion from child component
   const handleSnapshotDeleted = useCallback((deletedSnapshotId: string) => {
     setDataset((prevDataset) => {
       if (!prevDataset) return null;
@@ -658,7 +657,7 @@ export default function DatasetPage() {
         return {
           status: "fulfilled",
           id: uploadableFile.id,
-          responseData: response.data, // Assuming backend returns some relevant data
+          responseData: response.data,
         };
       } catch (error: unknown) {
         if (error instanceof AxiosError) {
@@ -692,7 +691,6 @@ export default function DatasetPage() {
       setUploadError(
         `Some files failed to upload: ${errorMessages.join(", ")}`,
       );
-      // Remove successfully uploaded files from the upload list
       successfulUploads.forEach((result) => {
         if (result.status === "fulfilled" && result.value?.id) {
           fileUploadHandlers.removeFile(result.value.id);
@@ -700,7 +698,6 @@ export default function DatasetPage() {
       });
     } else {
       setUploadError(null);
-      // Clear all files from the upload list if all uploads were successful
       if (fileUploadHandlers.clearFiles) {
         fileUploadHandlers.clearFiles();
       } else {
@@ -711,25 +708,14 @@ export default function DatasetPage() {
       );
     }
 
-    // Refetch the dataset to get the updated list of snapshots
     if (successfulUploads.length > 0) {
       fetchDataset();
     }
   };
 
-  // --- Function to handle the Analyze button click ---
   const handleAnalyzeClick = async () => {
     if (!datasetId || !session?.user?.id) {
       setAnalysisError("Dataset ID or User ID is missing.");
-      return;
-    }
-
-    // TODO: Implement logic to select a pipeline ID
-    // For now, using a placeholder. You need a UI element (like a dropdown)
-    // to allow the user to choose a pipeline and update selectedPipelineId state.
-    if (!selectedPipelineId) {
-      setAnalysisError("Please select a pipeline to analyze with.");
-      // You might want to open a modal or show a selection UI here
       return;
     }
 
@@ -737,21 +723,12 @@ export default function DatasetPage() {
     setAnalysisError(null);
 
     try {
-      // Make the POST request to your AnalyzeDataset endpoint
-      const response = await axiosInstance.post("/v1/analyze_dataset/", {
-        // Adjust URL if needed
+      const response = await axiosInstance.post("/v1/analyze/", {
         dataset_id: datasetId,
-        pipeline_id: selectedPipelineId, // Use the selected pipeline ID
         user_id: session.user.id,
       });
 
       console.log("Analysis request sent:", response.data);
-      // The actual analysis results will likely come via SSE,
-      // so you might not need to do much with this immediate response
-      // other than confirming the request was accepted.
-
-      // You would typically start listening for SSE events here or
-      // have a global SSE listener that updates relevant state.
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         const errorMessage =
@@ -760,11 +737,9 @@ export default function DatasetPage() {
       }
       console.error("Analyze dataset error:", error);
     } finally {
-      setIsAnalyzing(false); // Set to false when the *request* is complete.
-      // The actual analysis running state will be managed by SSE.
+      setIsAnalyzing(false);
     }
   };
-  // --- End of Analyze button click handler ---
 
   if (loading && !dataset) {
     return <div className="p-6 text-center">Loading dataset details...</div>;
@@ -783,39 +758,54 @@ export default function DatasetPage() {
   }
 
   return (
-    <div className="p-6 lg:p-8 max-w-6xl mx-auto">
+    <div className="p-6 lg:p-8  mx-auto">
       <div className="mb-6 pb-4 border-b flex justify-between">
         <div>
-          <h2 className="text-3xl font-bold mb-2">{dataset.name}</h2>{" "}
-          {/* Adjusted field name */}
+          <h2 className="text-3xl font-bold mb-2">{dataset.name}</h2>
           <p className="text-gray-600 dark:text-gray-400 mb-2">
-            {dataset.description || "No description provided."}{" "}
-            {/* Adjusted field name */}
+            {dataset.description || "No description provided."}
           </p>
           <p className="text-sm text-gray-500 dark:text-gray-300">
-            Created: {new Date(dataset.created_at).toLocaleString()}{" "}
-            {/* Adjusted field name */}
+            Created: {new Date(dataset.created_at).toLocaleString()}
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          {" "}
-          {/* Added flex and spacing */}
-          {/* Add a UI element here to select a pipeline */}
-          {/* Example: <PipelineSelect onPipelineSelected={setSelectedPipelineId} /> */}
-          <Button
-            onClick={handleAnalyzeClick} // Attach the click handler
-            disabled={isAnalyzing} // Disable while analyzing or if no pipeline selected
-          >
-            {isAnalyzing ? "Analyzing..." : "Analyze"}
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>{isAnalyzing ? "Analyzing..." : "Analyze"}</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Start Analysis?</DialogTitle>
+                <DialogDescription>
+                  We&apos;ll begin processing your dataset. This might take a
+                  few minutes. You can continue using the app while we work in
+                  the background!
+                </DialogDescription>
+              </DialogHeader>
+
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="outline">Cancel</Button>
+                </DialogClose>
+                <DialogClose asChild>
+                  <Button
+                    className="bg-sky-500 hover:bg-sky-600 "
+                    onClick={handleAnalyzeClick}
+                  >
+                    Analyze
+                  </Button>
+                </DialogClose>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+
           <Dialog>
             <DialogTrigger asChild>
               <Button>Add Snapshot</Button>
             </DialogTrigger>
             <DialogContent>
               <div className="hidden">
-                {" "}
-                {/* Consider making this visible */}
                 <DialogTitle>File Upload</DialogTitle>
               </div>
               <FileUploadArea
@@ -833,30 +823,113 @@ export default function DatasetPage() {
           </Dialog>
         </div>
       </div>
-
-      {/* Display analysis error if any */}
       {analysisError && (
         <div className="mb-4 text-red-500">{analysisError}</div>
       )}
-
+      <div className="mb-8">
+        <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-4">
+          Reports ({dataset.reports.length})
+        </h3>
+        {dataset.reports.length === 0 ? (
+          <p className="text-gray-500 dark:text-gray-400 italic p-4 border rounded-md bg-white dark:bg-gray-800">
+            No reports have been generated yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Report ID
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Status
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Created At
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    User
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider"
+                  >
+                    Results Count
+                  </th>
+                  <th scope="col" className="relative px-6 py-3">
+                    <span className="sr-only">View</span>
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+                {dataset.reports.map((report) => (
+                  <tr
+                    key={report.report_id}
+                    className="hover:bg-gray-100 dark:hover:bg-gray-700"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                      {report.report_id}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                      <span
+                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${report.status === "completed" ? "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100" : report.status === "pending" ? "bg-orange-100 text-orange-800 dark:bg-orange-800 dark:text-orange-100" : "bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100"}`}
+                      >
+                        {report.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      {new Date(report.created_at).toLocaleString()}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      {report.user?.name || "N/A"}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
+                      {report.results_count}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                      {/* Replace '/reports/' with your actual route for viewing a single report */}
+                      <a
+                        href={`/dashboard/reports/${report.report_id}`}
+                        className="text-sky-600 hover:text-sky-900 dark:text-sky-400 dark:hover:text-sky-300"
+                      >
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
       <div className="mb-6">
         <h3 className="text-xl font-semibold mb-4">
           Existing Snapshots ({dataset.snapshots.length})
-        </h3>{" "}
-        {/* Added item count */}
+        </h3>
         {dataset.snapshots.length === 0 ? (
           <p className="text-gray-500 italic">
             No snapshots have been uploaded yet.
           </p>
         ) : (
           <ul className=" gap-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-            {" "}
-            {/* Improved grid responsiveness */}
             {dataset.snapshots.map((snapshot) => (
               <SnapshotListItem
                 key={snapshot.id}
                 snapshot={snapshot}
-                onSnapshotDeleted={handleSnapshotDeleted} // Pass the callback here
+                onSnapshotDeleted={handleSnapshotDeleted}
               />
             ))}
           </ul>

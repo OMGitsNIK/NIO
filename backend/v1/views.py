@@ -1,4 +1,5 @@
 import logging
+import threading
 from .lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features
 from .lib.report_gen import generate_pdf_report
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
@@ -35,8 +36,8 @@ def events(request):
 
     return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
-def alert_frontend(message: str, progress: int):
-    sse_clients.append({"message": message, "progress": progress})
+def alert_frontend(message: str, progress: int, type=''):
+    sse_clients.append({"message": message, "progress": progress,"type":type})
     print(f"Alerted Frontend: {message} ({progress}%)")
 
 @csrf_exempt
@@ -126,20 +127,26 @@ def dataset(request,user_id):
 def dataset_id(request, id):
     if request.method == "GET":
         user_id = request.GET.get("user_id")
-        ic(user_id)
-        dataset = get_object_or_404(models.DatasetBridge, dataset_id=id)
-        ic(dataset)
+        ic(user_id)  # Debugging: Check user_id
+
+        # Fetch the DatasetBridge instance using the dataset_id
+        dataset_bridge = get_object_or_404(models.DatasetBridge, dataset_id=id)
+        dataset = dataset_bridge.dataset  # Access the related Dataset object
+        ic(dataset)  # Debugging: Check dataset
+
+        # Check if user has access to the dataset
         if user_id:
             bridge_user = models.DatasetUsersBridge.objects.filter(
-                dataset_bridge=dataset, user_id=user_id
+                dataset_bridge=dataset_bridge, user_id=user_id
             ).first()
-            ic(bridge_user)
+            ic(bridge_user)  # Debugging: Check bridge_user
             if not bridge_user:
                 return JsonResponse({"error": "Access Denied"}, status=403)
 
+        # Fetch snapshots related to the dataset
         snapshots = []
         for snapshot in models.DatasetSnapshotBridge.objects.filter(
-            dataset_bridge=dataset
+            dataset_bridge=dataset_bridge
         ).values("snapshot_id"):
             snapshot_obj = models.Snapshot.objects.get(id=snapshot["snapshot_id"])
             snapshots.append(
@@ -151,15 +158,34 @@ def dataset_id(request, id):
                 }
             )
 
+        # Fetch related reports for the dataset
+        reports = models.Report.objects.filter(dataset=dataset)
+        reports_data = [
+            {
+                "report_id": report.id,
+                "status": report.status,
+                "created_at": report.created_at,
+                "user": {
+                    "id": report.user.id,
+                    "name": report.user.name,
+                },
+                "results_count": report.results.count(),  # Number of snapshots in the report
+            }
+            for report in reports
+        ]
+
+        # Return the dataset info along with related reports and snapshots
         return JsonResponse(
             {
-                "name": dataset.dataset.name,
-                "description": dataset.dataset.description,
-                "created_at": dataset.dataset.created_at,
+                "name": dataset.name,
+                "description": dataset.description,
+                "created_at": dataset.created_at,
                 "snapshots": snapshots,
+                "reports": reports_data,  # Include the reports in the response
             },
             safe=False,
         )
+
 
     if request.method == "POST":
         ic("in post")
@@ -455,196 +481,212 @@ def inpaint_image(bilateral, img):
 
 @csrf_exempt
 def AnalyzeDataset(request):
-    """
-    Analyzes a dataset by executing a specified pipeline of operations on each image.
-    Notifies the frontend about the progress and results via SSE.
-    """
     if request.method == "POST":
         try:
-            # Extract dataset ID and pipeline ID from the request body
             data = json.loads(request.body)
             dataset_id = data.get("dataset_id")
-            pipeline_id = data.get("pipeline_id")
-            user_id = data.get("user_id") # Assuming user_id is also sent
+            user_id = data.get("user_id")
 
-            if not dataset_id or not pipeline_id or not user_id:
-                 return JsonResponse({"error": "dataset_id, pipeline_id, and user_id are required"}, status=400)
+            if not dataset_id or not user_id:
+                return JsonResponse({"error": "dataset_id and user_id are required"}, status=400)
 
-            # Simulate adding to a queue and starting the process
-            alert_frontend(f"Starting analysis for dataset {dataset_id} using pipeline {pipeline_id}...", 5)
+            # Fetch the dataset and user objects
+            dataset = models.Dataset.objects.get(id=dataset_id)
+            user = models.User.objects.get(id=user_id)
 
-            # Get the dataset bridge and pipeline
-            dataset_bridge = get_object_or_404(models.DatasetBridge, dataset_id=dataset_id)
-            pipeline = get_object_or_404(models.Pipeline, id=pipeline_id)
-            user = get_object_or_404(models.User, id=user_id)
+            # Create a new report with a 'pending' status
+            report = models.Report.objects.create(
+                dataset=dataset,
+                user=user,
+                status="pending"
+            )
 
+            # Start the background analysis task
+            threading.Thread(target=analyze_dataset_background, args=(dataset_id, user_id, report.id)).start()
 
-            # Get ordered operations associated with the pipeline
-            pipeline_operations = models.PipelineOperationBridge.objects.filter(
-                pipeline=pipeline
-            ).order_by('operation__order').select_related('operation') # Order by operation order
+            return JsonResponse({"status": "processing_started", "report_id": report.id}, status=202)
 
-            if not pipeline_operations.exists():
-                 alert_frontend(f"Pipeline {pipeline_id} has no operations defined.", 100)
-                 return JsonResponse({"message": f"Pipeline {pipeline_id} has no operations defined."}, status=200)
-
-
-            # Get all snapshots associated with the dataset
-            dataset_snapshots = models.DatasetSnapshotBridge.objects.filter(
-                dataset_bridge=dataset_bridge
-            ).select_related('snapshot__media') # Optimize query
-
-            total_snapshots = dataset_snapshots.count()
-            if total_snapshots == 0:
-                 alert_frontend("No snapshots found in the dataset.", 100)
-                 return JsonResponse({"message": "No snapshots found in the dataset."}, status=200)
-
-            total_operations = total_snapshots * pipeline_operations.count()
-            current_operation_count = 0
-            analysis_results = []
-
-            # Iterate through snapshots and execute pipeline operations
-            for i, ds_bridge in enumerate(dataset_snapshots):
-                snapshot = ds_bridge.snapshot
-                media_file = snapshot.media.file
-
-                try:
-                    # Open the image using PIL and convert to OpenCV format
-                    pil_image = Image.open(media_file)
-                    # Ensure image is in a format OpenCV can handle (e.g., BGR)
-                    if pil_image.mode == 'RGBA':
-                        pil_image = pil_image.convert('RGB')
-                    opencv_image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGB2BGR)
-
-                    snapshot_results = {
-                        "snapshot_id": str(snapshot.id),
-                        "media_name": snapshot.media.name,
-                        "operations": []
-                    }
-
-                    # Execute each operation in the pipeline for the current snapshot
-                    for j, po_bridge in enumerate(pipeline_operations):
-                        pipeline_operation = po_bridge.operation
-                        current_operation_count += 1
-
-                        # Simulate creating a new Operation instance for this specific snapshot execution
-                        new_operation = models.Operation(
-                            type=pipeline_operation.type,
-                            status='running', # Set status to running
-                            order=pipeline_operation.order,
-                            transferred_attributes=pipeline_operation.transferred_attributes,
-                            # reference will be set after creating Estimate/Filter
-                        )
-
-                        # Simulate creating related Estimate or Filter based on operation type
-                        if pipeline_operation.type == 'estimate':
-                            # Simulate creating an Estimate
-                            new_estimate = models.Estimate(
-                                name=f"Estimate for {snapshot.media.name} - {pipeline_operation.id}",
-                                parameters=pipeline_operation.transferred_attributes, # Use transferred_attributes as parameters
-                                output={} # Initialize output
-                            )
-                            new_estimate.save()
-                            new_operation.reference = new_estimate.id
-                            new_operation.save()
-
-                            # Simulate performing the estimate (e.g., calculate average intensity)
-                            # In a real scenario, this would involve calling the actual estimation logic
-                            estimated_value = np.mean(opencv_image) # Simple example: average intensity
-                            new_estimate.output = {"average_intensity": float(estimated_value)}
-                            new_estimate.save()
-
-                            # Update operation status
-                            new_operation.status = 'complete'
-                            new_operation.save()
-
-                            snapshot_results["operations"].append({
-                                "operation_id": str(new_operation.id),
-                                "type": new_operation.type,
-                                "status": new_operation.status,
-                                "estimate_id": str(new_estimate.id),
-                                "output": new_estimate.output
-                            })
-
-                        elif pipeline_operation.type == 'filter':
-                            # Simulate creating a Filter (requires a Bucket output)
-                            # This is a placeholder; a real filter would produce an image and save it to a Bucket
-                            alert_frontend(f"Warning: Filter operation simulation is a placeholder.", -1) # Use -1 for warnings
-
-                            # Simulate creating a placeholder Bucket output
-                            placeholder_bucket = models.Bucket(
-                                name=f"Filtered_{snapshot.media.name}_{pipeline_operation.id}",
-                                created_by=user,
-                                # file field would be set here in a real implementation
-                            )
-                            placeholder_bucket.save()
-
-                            new_filter = models.Filter(
-                                name=f"Filter for {snapshot.media.name} - {pipeline_operation.id}",
-                                parameters=pipeline_operation.transferred_attributes,
-                                output=placeholder_bucket # Link to the placeholder bucket
-                            )
-                            new_filter.save()
-                            new_operation.reference = new_filter.id
-                            new_operation.save()
-
-                            # Simulate filter execution (no actual image processing here)
-                            new_operation.status = 'complete' # Simulate completion
-                            new_operation.save()
-
-                            snapshot_results["operations"].append({
-                                "operation_id": str(new_operation.id),
-                                "type": new_operation.type,
-                                "status": new_operation.status,
-                                "filter_id": str(new_filter.id),
-                                # No output field for filter in results, output is in the Bucket
-                            })
-
-
-                        # Link the snapshot to the newly created operation
-                        models.SnapshotOperationBridge.objects.create(
-                            snapshot=snapshot,
-                            operation=new_operation
-                        )
-
-                        # Update frontend with progress after each operation
-                        progress_per_operation = 90 / total_operations if total_operations > 0 else 90
-                        current_progress = 5 + int(current_operation_count * progress_per_operation)
-                        alert_frontend(f"Processing snapshot {i + 1}/{total_snapshots}, operation {j + 1}/{pipeline_operations.count()}...", current_progress)
-                        time.sleep(0.1) # Small delay to simulate work
-
-                    analysis_results.append(snapshot_results)
-
-                except Exception as img_e:
-                    logging.error(f"Error processing image {snapshot.media.name}: {img_e}")
-                    snapshot_results = {
-                        "snapshot_id": str(snapshot.id),
-                        "media_name": snapshot.media.name,
-                        "error": f"Failed to process image: {img_e}"
-                    }
-                    analysis_results.append(snapshot_results)
-                    # Continue processing other images
-
-            # Analysis complete
-            alert_frontend("Dataset analysis complete.", 100)
-
-            return JsonResponse({"status": "success", "results": analysis_results}, status=200)
-
-        except models.DatasetBridge.DoesNotExist:
-             alert_frontend(f"Dataset with ID {dataset_id} not found.", 100)
-             return JsonResponse({"error": f"Dataset with ID {dataset_id} not found"}, status=404)
-        except models.Pipeline.DoesNotExist:
-             alert_frontend(f"Pipeline with ID {pipeline_id} not found.", 100)
-             return JsonResponse({"error": f"Pipeline with ID {pipeline_id} not found"}, status=404)
-        except models.User.DoesNotExist:
-             alert_frontend(f"User with ID {user_id} not found.", 100)
-             return JsonResponse({"error": f"User with ID {user_id} not found"}, status=404)
         except json.JSONDecodeError:
-            return JsonResponse({"error": "Invalid JSON in request body"}, status=400)
+            return JsonResponse({"error": "Invalid JSON"}, status=400)
         except Exception as e:
-            logging.error(f"An error occurred during dataset analysis: {e}")
-            alert_frontend("An error occurred during analysis.", 100)
-            return JsonResponse({"error": "An error occurred during dataset analysis"}, status=500)
-
+            logging.error(f"Error starting analysis: {e}")
+            return JsonResponse({"error": "Internal Server Error"}, status=500)
     else:
         return JsonResponse({"error": "Method not allowed"}, status=405)
+
+
+
+
+def report_detail_view(request, report_id):
+    """
+    View to get the details of a specific report.
+
+    Args:
+        request: The HTTP request object.
+        report_id (uuid): The UUID of the report to retrieve.
+
+    Returns:
+        JsonResponse: A JSON response containing the report details or an error message.
+    """
+    # Use get_object_or_404 to retrieve the report or return a 404 error
+    report = get_object_or_404(models.Report, id=report_id)
+
+    # Prepare the data to be returned in the JSON response
+    report_data = {
+        'id': report.id,
+        'dataset_name': report.dataset.name, # Accessing related Dataset name
+        'user_name': report.user.name,       # Accessing related User name
+        'report_file_url': request.build_absolute_uri(report.report_file.url) if report.report_file else None, # Get absolute URL for the file
+        'created_at': report.created_at.isoformat(), # Format datetime as ISO string
+        'status': report.status,
+        'snapshots': [], # List to hold details of associated snapshots
+    }
+
+    # Add details for associated snapshots
+    for snapshot in report.results.all():
+        snapshot_data = {
+            'id': snapshot.id,
+            'media_name': snapshot.media.name, # Accessing related Bucket name
+            'location_title': snapshot.location.title, # Accessing related Location title
+            'created_on': snapshot.created_on.isoformat(), # Format datetime as ISO string
+            'version': snapshot.version,
+            'created_by_name': snapshot.created_by.name, # Accessing related User name
+            'src':'/v1/bucket/'+str(snapshot.media.id)
+        }
+        report_data['snapshots'].append(snapshot_data)
+
+    # Return the data as a JSON response
+    return JsonResponse(report_data)
+
+
+def save_snapshot_to_report(img_arr, report, user) -> None:
+    from django.core.files.base import ContentFile
+    import uuid
+    import cv2
+
+    success, buffer = cv2.imencode('.jpg', (img_arr * 255).astype(np.uint8))
+    if not success:
+        raise Exception("Failed to encode image.")
+
+    image_file = ContentFile(buffer.tobytes(), name=f"{uuid.uuid4()}.jpg")
+
+    bucket = models.Bucket.objects.create(
+        file=image_file,
+        name=image_file.name,
+        created_by=user
+    )
+
+    snapshot = models.Snapshot.objects.create(
+        media=bucket,
+        location=models.Location.objects.create(),  # or pass location if you have
+        created_by=user
+    )
+
+    report.results.add(snapshot)
+
+
+def analyze_image(media_file, report_id) -> dict:
+    try:
+        ic(media_file.name)
+
+        img = convert_image_to_opencv(media_file)
+
+
+        report = models.Report.objects.get(id=report_id)
+        user = report.user
+
+        denoised, _ = denoise_image(img)
+        save_snapshot_to_report(denoised, report, user)
+
+        deconvolved, _ = deconvolve_image(denoised)
+        save_snapshot_to_report(deconvolved, report, user)
+
+        bilateral, _ = apply_bilateral_filter(deconvolved)
+        save_snapshot_to_report(bilateral, report, user)
+
+        inpainted, _ = (img, img)
+        save_snapshot_to_report(inpainted, report, user)
+
+        gaussian_filtered = gaussian(inpainted, sigma=1)
+        save_snapshot_to_report(gaussian_filtered, report, user)
+
+        sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
+        save_snapshot_to_report(sobel_filtered, report, user)
+
+        wavelet_denoised = denoise_wavelet(inpainted)
+        save_snapshot_to_report(wavelet_denoised, report, user)
+
+        _, _, thresh = extract_features(inpainted)
+        save_snapshot_to_report(thresh, report, user)
+
+        report.status = "completed"
+        report.save()
+
+        return {
+            "status": "success",
+            "images_count": 8,
+        }
+    except Exception as e:
+        logging.error(f"Error processing image: {e}")
+        return {
+            "status": "error",
+            "details": str(e),
+        }
+
+
+
+
+def analyze_dataset_background(dataset_id, user_id, report_id):
+    alert_frontend("Analysis Started, Refreshing", progress=0,type="REFRESH")
+
+    try:
+        dataset_bridge = models.DatasetBridge.objects.get(dataset_id=dataset_id)
+        user = models.User.objects.get(id=user_id)
+
+        # Fetch the report or create a new one if not found
+        report = models.Report.objects.get(id=report_id)
+
+        # Ensure the report belongs to the same dataset and user
+        if report.dataset != dataset_bridge.dataset or report.user.id != user.id:
+            raise ValueError("Report does not belong to this dataset or user")
+
+        dataset_snapshots = models.DatasetSnapshotBridge.objects.filter(
+            dataset_bridge=dataset_bridge
+        ).select_related('snapshot__media')
+
+        total_snapshots = len(dataset_snapshots)
+        processed_snapshots = 0
+
+        for ds_bridge in dataset_snapshots:
+            snapshot = ds_bridge.snapshot
+            media_file = snapshot.media.file
+
+            # Assuming analyze_image() has some stages or steps you can break down
+            alert_frontend(f"Starting analysis of image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
+
+            # Perform image analysis
+            result = analyze_image(media_file,report_id)
+            processed_snapshots += 1
+
+            # Associate the result (snapshot) with the report
+            report.results.add(snapshot)  # Add the snapshot to the report's results
+
+            # Update progress after analysis step
+            alert_frontend(f"Analyzing image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
+
+            # Complete progress after finishing all images
+            if processed_snapshots == total_snapshots:
+                alert_frontend("Completed analysis for all images in dataset.", progress=100)
+
+            # Do whatever you want with the result (save it? log it? update DB?)
+            print(f"Snapshot {snapshot.id} analysis result: {result}")
+
+        # Once all images are analyzed, mark the report as completed
+        report.status = 'completed'
+        report.save()
+
+    except Exception as e:
+        logging.error(f"Background dataset analysis failed: {e}")
+        if 'report' in locals():  # If the report was created, mark it as failed
+            report.status = 'failed'
+            report.save()

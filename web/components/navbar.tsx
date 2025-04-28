@@ -4,7 +4,12 @@ import { ArrowRightIcon, SearchIcon } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { CONFIG } from "@/lib/config";
+import { Space_Mono } from "next/font/google";
+import { cn } from "@/lib/utils";
+
+const space_mono = Space_Mono({ subsets: ["latin"], weight: ["400"] });
 
 function Nav() {
   const [query, setQuery] = useState("");
@@ -19,7 +24,7 @@ function Nav() {
     }
   };
   return (
-    <div className="w-full h-full border-b">
+    <div className="w-full h-full flex border-b relative">
       <div className="relative w-96 h-full">
         <Input
           value={query}
@@ -40,6 +45,8 @@ function Nav() {
           <ArrowRightIcon size={16} aria-hidden="true" />
         </button>
       </div>
+
+      <Alerts />
     </div>
   );
 }
@@ -48,5 +55,53 @@ export function NavBar() {
     <Suspense>
       <Nav />
     </Suspense>
+  );
+}
+
+function Alerts() {
+  const router = useRouter();
+  const [alert, setAlert] = useState<{
+    message: string;
+    progress: number;
+    type: "REFRESH" | string;
+  }>({
+    message: "",
+    progress: 0,
+    type: "",
+  });
+
+  useEffect(() => {
+    const eventSource = new EventSource(CONFIG.SERVER_URL + "/v1/events/");
+    eventSource.onmessage = (event) => {
+      const newAlert = JSON.parse(event.data);
+      setAlert(newAlert);
+      if (newAlert.type === "REFRESH") {
+        window.location.reload();
+        router.refresh();
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
+  }, []);
+
+  return (
+    <div className="flex flex-col justify-center items-start p-2">
+      <div className={cn(space_mono.className)}>
+        <p>{alert.message}</p>
+        <p>Progress: {alert.progress}%</p>
+      </div>
+
+      <div className=" w-full h-0.5 absolute -bottom-0.5 inset-x-0">
+        <div
+          className="h-full overflow-hidden transition-all duration-300 bg-gradient-to-l  from-sky-500 to-blue-400"
+          style={{
+            width: alert.progress + "%",
+            opacity: alert.progress == 100 ? 0 : 100,
+          }}
+        ></div>
+      </div>
+    </div>
   );
 }
