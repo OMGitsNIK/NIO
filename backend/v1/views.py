@@ -1,6 +1,6 @@
 import logging
 import threading
-from .lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features
+from .lib.cv import apply_bilateral_filter, convert_image_to_opencv, deconvolve_image, denoise_image, extract_features, load_yolo_classification_model, load_yolo_segmentation_model, run_yolo_classification, run_yolo_segmentation
 from .lib.report_gen import generate_pdf_report
 from django.http import HttpResponse, JsonResponse, HttpResponseBadRequest
 import mimetypes
@@ -320,8 +320,8 @@ def bucket_id(request, id):
 
     if request.method == "GET":
         try:
-            max_size = int(request.GET.get("size", 2000))
-            quality = int(request.GET.get("quality", 100))
+            max_size = int(request.GET.get("size", 720))
+            quality = int(request.GET.get("quality", 50))
             mime_type, _ = mimetypes.guess_type(bucket_file.file.url)
             ic(request.method)
             ic(request.GET)
@@ -563,7 +563,7 @@ def report_detail_view(request, report_id):
     return JsonResponse(report_data)
 
 
-def save_snapshot_to_report(img_arr, report, user) -> None:
+def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
     from django.core.files.base import ContentFile
     import uuid
     import cv2
@@ -576,7 +576,7 @@ def save_snapshot_to_report(img_arr, report, user) -> None:
 
     bucket = models.Bucket.objects.create(
         file=image_file,
-        name=image_file.name,
+        name=image_file.name if name is None else name,
         created_by=user
     )
 
@@ -599,16 +599,16 @@ def analyze_image(media_file, report_id) -> dict:
         report = models.Report.objects.get(id=report_id)
         user = report.user
 
-        denoised, _ = denoise_image(img)
+        denoised= denoise_image(img)
         save_snapshot_to_report(denoised, report, user)
 
-        deconvolved, _ = deconvolve_image(denoised)
+        deconvolved= deconvolve_image(denoised)
         save_snapshot_to_report(deconvolved, report, user)
 
-        bilateral, _ = apply_bilateral_filter(deconvolved)
+        bilateral= apply_bilateral_filter(deconvolved)
         save_snapshot_to_report(bilateral, report, user)
 
-        inpainted, _ = (img, img)
+        inpainted= (img, img)
         save_snapshot_to_report(inpainted, report, user)
 
         gaussian_filtered = gaussian(inpainted, sigma=1)
@@ -622,6 +622,52 @@ def analyze_image(media_file, report_id) -> dict:
 
         _, _, thresh = extract_features(inpainted)
         save_snapshot_to_report(thresh, report, user)
+        
+        seg_model = load_yolo_segmentation_model('public/best_seg.py') # Uses default yolov8n-seg.pt
+        cls_model = load_yolo_classification_model('public/best_cls.py') # Uses default yolov8n-cls.pt
+
+        # 4. Run segmentation if the model loaded successfully
+        if seg_model:
+            print("\nRunning YOLO Segmentation...")
+            segmentation_results = run_yolo_segmentation(wavelet_denoised, seg_model)
+
+            if segmentation_results:
+                segmentation_image, segmentation_summary = segmentation_results
+                print("YOLO Segmentation Results:")
+                print(segmentation_summary)
+
+                # --- Add save snapshot call after successful segmentation ---
+                print("Saving segmentation snapshot to report...")
+                try:
+                    # Assuming segmentation_image is the required 'res_img_cv2_format'
+                    save_snapshot_to_report(segmentation_image, report, user)
+                    print("Segmentation snapshot saved successfully.")
+                except Exception as e:
+                    print(f"Failed to save segmentation snapshot to report: {e}")
+
+            else:
+                print("YOLO Segmentation failed or did not return results.")
+
+
+        if cls_model:
+            print("\nRunning YOLO Classification...")
+            classification_results = run_yolo_classification(wavelet_denoised, cls_model)
+
+            if classification_results:
+                classification_image, classification_summary = classification_results
+                print("YOLO Classification Results:")
+                print(classification_summary)
+                print("Saving classification snapshot to report...")
+                try:
+                    save_snapshot_to_report(classification_image, report, user)
+                    print("Classification snapshot saved successfully.")
+                except Exception as e:
+                    print(f"Failed to save classification snapshot to report: {e}")
+
+        else:
+            print("YOLO Classification failed or did not return results.")
+
+
 
         report.status = "completed"
         report.save()
