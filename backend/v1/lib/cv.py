@@ -323,7 +323,7 @@ def run_yolo_classification(img_arr, model, save_path: str = None):
 
         # Optionally save the image
         if save_path:
-            cv2.imwrite(save_path, results_img)
+            results.save(save_path)
             print(f"Results saved to {save_path}")
 
         # Process results for text summary (top class and confidence)
