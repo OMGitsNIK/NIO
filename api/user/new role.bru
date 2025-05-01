@@ -1,0 +1,21 @@
+meta {
+  name: new role
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{SERVER_URL}}/v1/roles/
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{AUTH_TOKEN}}
+}
+
+body:json {
+  {
+    "name": "Researcher"
+  }
+}
