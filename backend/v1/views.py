@@ -320,8 +320,8 @@ def bucket_id(request, id):
 
     if request.method == "GET":
         try:
-            max_size = int(request.GET.get("size", 2000))
-            quality = int(request.GET.get("quality", 100))
+            max_size = int(request.GET.get("size", 720))
+            quality = int(request.GET.get("quality", 50))
             mime_type, _ = mimetypes.guess_type(bucket_file.file.url)
             ic(request.method)
             ic(request.GET)
