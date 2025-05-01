@@ -28,7 +28,6 @@ class Location(models.Model):
 
 class Estimate(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-
     name = models.TextField()
     parameters = models.JSONField()
     output = models.JSONField()
@@ -158,3 +157,19 @@ class SnapshotOperationBridge(models.Model):
 class PipelineOperationBridge(models.Model):
     pipeline = models.ForeignKey(Pipeline, on_delete=models.CASCADE)
     operation = models.ForeignKey(Operation, on_delete=models.CASCADE)
+
+
+class Report(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, related_name="reports")
+    user = models.ForeignKey(User, on_delete=models.CASCADE)  # User who generated the report
+    report_file = models.FileField(upload_to="reports/")  # The actual report file
+    created_at = models.DateTimeField(default=timezone.now)  # When the report was generated
+    status = models.CharField(
+        max_length=12,
+        choices=[("pending", "Pending"), ("completed", "Completed"), ("failed", "Failed")],
+        default="pending"
+    )
+    results = models.ManyToManyField(Snapshot, related_name="reports")  # Results of the report (snapshots)
+    def __str__(self):
+        return f"Report for Dataset {self.dataset.name} by {self.user.name}"

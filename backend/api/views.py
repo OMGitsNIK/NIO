@@ -6,7 +6,7 @@ import json
 from .forms import AuthForm
 from v1.models import User
 import bcrypt
-
+from icecream import ic
 
 
 @csrf_exempt
@@ -77,6 +77,7 @@ def register(request):
                 user = User.objects.filter(email=email).first()
 
                 if user:
+                    ic(user)
                     return JsonResponse({"error": "User already exists"}, status=400)
 
                 # Generate JWT first before saving user
@@ -92,7 +93,7 @@ def register(request):
                     email=email,
                     name=email.split("@")[0],  # Use part of the email as name
                     password=bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8"),
-                )  
+                )
                 user.save()
 
                 # Now that user is created, update the JWT payload with correct user ID
@@ -105,10 +106,11 @@ def register(request):
                         "access_token": token,
                     }
                 )
-
+            ic(form.errors)
             return JsonResponse({"error": form.errors}, status=400)
 
-        except json.JSONDecodeError:
+        except json.JSONDecodeError as e:
+            ic(e)
             return JsonResponse({"error": "Invalid JSON"}, status=400)
 
     return JsonResponse({"error": "Only POST method is allowed"}, status=405)

@@ -1,0 +1,14 @@
+{
+  "name": "nio",
+  "version": "1.0.0",
+  "main": "next.config.js",
+  "scripts": {},
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@playwright/test": "^1.50.1",
+    "@types/node": "^22.13.1"
+  }
+}

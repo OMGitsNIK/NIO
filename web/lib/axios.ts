@@ -1,8 +1,7 @@
-import axios from 'axios';
+import axios from "axios";
 
- const axiosInstance = axios.create({
-		baseURL: "http://127.0.0.1:8000/",
-		
-	});
+const axiosInstance = axios.create({
+  baseURL: process.env.NEXT_PUBLIC_DJANGO_API_URL,
+});
 
 export default axiosInstance;
