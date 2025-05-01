@@ -30,7 +30,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["*"]
 
-CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000"]
+CORS_ALLOWED_ORIGINS = ["http://localhost:3000", "http://127.0.0.1:3000","http://192.168.14.123:3000"]
 
 # CORS_ALLOWED_ORIGINS = ["*"]
 
@@ -80,7 +80,7 @@ NEXTAUTH_SECRET = """En1gm0gcay1Uw3YZIr5yWgFNkLJaZqm248zR0B3wi4+PunxfK7NQQPlgImW
 Hfnl427/I2sLZMKBngiTVya3OMPL7XIo/U7vAcXSAoYzPelYR1G8TARu4z0Em0VE
 HqmpRhDneFrPSH0gujLjlG/UK0EnT7c4DxiE7o/m30M6fbUkVZ28HdoHsYqYbwoF
 BYjJqKquuGa8eqUTcRoypbm2qnGy3Ot0rGgEgTBAPTf+5+pmSYsEhC9wTla4DXvl
-0DWrUagvl40="""
+0DWrUddsdagvl40"""
 BCRYPT_SALT = bcrypt.gensalt()
 
 DATABASES = {

@@ -567,7 +567,7 @@ def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
     from django.core.files.base import ContentFile
     import uuid
     import cv2
-
+    ic(img_arr)
     success, buffer = cv2.imencode('.jpg', (img_arr * 255).astype(np.uint8))
     if not success:
         raise Exception("Failed to encode image.")
@@ -608,58 +608,58 @@ def analyze_image(media_file, report_id) -> dict:
         bilateral= apply_bilateral_filter(deconvolved)
         save_snapshot_to_report(bilateral, report, user)
 
-        inpainted= (img, img)
+        inpainted= bilateral
         save_snapshot_to_report(inpainted, report, user)
 
-        gaussian_filtered = gaussian(inpainted, sigma=1)
-        save_snapshot_to_report(gaussian_filtered, report, user)
+        # gaussian_filtered = gaussian(inpainted, sigma=1)
+        # save_snapshot_to_report(gaussian_filtered, report, user)
 
-        sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
-        save_snapshot_to_report(sobel_filtered, report, user)
+        # sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
+        # save_snapshot_to_report(sobel_filtered, report, user)
 
-        wavelet_denoised = denoise_wavelet(inpainted)
+        wavelet_denoised = denoise_image(inpainted)
         save_snapshot_to_report(wavelet_denoised, report, user)
 
-        _, _, thresh = extract_features(inpainted)
-        save_snapshot_to_report(thresh, report, user)
+        # _, _, thresh = extract_features(inpainted)
+        # save_snapshot_to_report(thresh, report, user)
         
-        seg_model = load_yolo_segmentation_model('public/best_seg.py') # Uses default yolov8n-seg.pt
-        cls_model = load_yolo_classification_model('public/best_cls.py') # Uses default yolov8n-cls.pt
-
+        seg_model = load_yolo_segmentation_model('public/best_seg.pt') # Uses default yolov8n-seg.pt
+        cls_model = load_yolo_classification_model('public/best_cls.pt') # Uses default yolov8n-cls.pt
+        # ic(seg_model)
+        # ic(cls_model)
         # 4. Run segmentation if the model loaded successfully
         if seg_model:
             print("\nRunning YOLO Segmentation...")
             segmentation_results = run_yolo_segmentation(wavelet_denoised, seg_model)
-
             if segmentation_results:
                 segmentation_image, segmentation_summary = segmentation_results
-                print("YOLO Segmentation Results:")
-                print(segmentation_summary)
+                ic("YOLO Segmentation Results:")
+                ic(segmentation_image)
 
                 # --- Add save snapshot call after successful segmentation ---
-                print("Saving segmentation snapshot to report...")
+                ic("Saving segmentation snapshot to report...")
                 try:
                     # Assuming segmentation_image is the required 'res_img_cv2_format'
-                    save_snapshot_to_report(segmentation_image, report, user)
-                    print("Segmentation snapshot saved successfully.")
+                    save_snapshot_to_report(segmentation_image[0], report, user)
+                    ic("Segmentation snapshot saved successfully.")
                 except Exception as e:
-                    print(f"Failed to save segmentation snapshot to report: {e}")
+                    ic(f"Failed to save segmentation snapshot to report: {e}")
 
             else:
-                print("YOLO Segmentation failed or did not return results.")
+                ic("YOLO Segmentation failed or did not return results.")
 
 
         if cls_model:
             print("\nRunning YOLO Classification...")
             classification_results = run_yolo_classification(wavelet_denoised, cls_model)
-
+            ic(classification_results)
             if classification_results:
                 classification_image, classification_summary = classification_results
                 print("YOLO Classification Results:")
                 print(classification_summary)
                 print("Saving classification snapshot to report...")
                 try:
-                    save_snapshot_to_report(classification_image, report, user)
+                    save_snapshot_to_report(classification_image[0], report, user)
                     print("Classification snapshot saved successfully.")
                 except Exception as e:
                     print(f"Failed to save classification snapshot to report: {e}")
