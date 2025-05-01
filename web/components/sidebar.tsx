@@ -118,12 +118,12 @@ export const Sidebar = () => {
         >
           <LayoutDashboard className="mr-3 h-4 w-4" /> Dashboard
         </Link>
-        <Link
+        {/* <Link
           href="/analyze"
           className="w-full justify-start items-center flex py-2 text-gray-700 hover:text-indigo-600 transition-colors duration-150"
         >
           <Activity className="mr-3 h-4 w-4" /> Analyze
-        </Link>
+        </Link> */}
       </div>
       <Button onClick={() => signOut()}>Logout</Button>
     </div>
