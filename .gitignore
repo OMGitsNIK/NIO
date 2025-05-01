@@ -1,3 +1,3 @@
-backend/venv
-
-node_modules/uuid/dist/nil.js
+web/node_modules
+web/.next/
+backend/**/__pycache__/
