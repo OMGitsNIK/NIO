@@ -15,7 +15,12 @@ import pywt
 def convert_image_to_opencv(image):
     image_bytes = image.read()
     nparr = np.frombuffer(image_bytes, np.uint8)
-    return cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+    if img is None:
+        return None
+    img_rgb=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                 turn img_rgb
+
 
 def convert_bytes_to_opencv_image(image_bytes: bytes) -> Optional[np.ndarray]:
     """Converts raw image bytes to an OpenCV image (NumPy array)."""
@@ -25,9 +30,11 @@ def convert_bytes_to_opencv_image(image_bytes: bytes) -> Optional[np.ndarray]:
     try:
         nparr = np.frombuffer(image_bytes, np.uint8)
         img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
         if img is None:
             print("Failed to decode image bytes.")
-        return img
+
+        return img_rgb
     except Exception as e:
         print(f"Error decoding image bytes: {e}")
         return None
@@ -35,7 +42,9 @@ def convert_bytes_to_opencv_image(image_bytes: bytes) -> Optional[np.ndarray]:
 
 def denoise_image(img_arr: np.ndarray) -> Optional[np.ndarray]:
     """Applies non-local means denoising to an image."""
+
     if img_arr is None: return None
+    cv2.imwrite("denoised_image.jpg", img_arr)
     try:
         if len(img_arr.shape) == 3:
             denoised = cv2.fastNlMeansDenoisingColored(img_arr, None, 10, 10, 7, 21)
@@ -211,9 +220,9 @@ def find_similar_images(
     sorted_results = sorted(results, key=lambda x: -x["score"])
     return sorted_results[:5]
 
-def run_yolo_segmentation(img_arr: np.ndarray, model: Any, save_path: str = None):
+def run_yolo_segmentation(img_arr, model: Any, save_path: str = None):
     """
-    Runs YOLO Segmentation, draws results on the image, saves the image to the specified path, 
+    Runs YOLO Segmentation, draws results on the image, saves the image to the specified path,
     and returns the image along with a summary of detected objects (count and names).
 
     Args:
@@ -230,7 +239,7 @@ def run_yolo_segmentation(img_arr: np.ndarray, model: Any, save_path: str = None
     if not isinstance(img_arr, np.ndarray):
         print("Input image is not a valid NumPy array.")
         return None
-    
+
     if model is None:
         print("YOLO Segmentation model is None. Skipping.")
         return None
@@ -305,7 +314,7 @@ def run_yolo_classification(img_arr, model, save_path: str = None):
     if not isinstance(img_arr, np.ndarray):
         print("Input image is not a valid NumPy array.")
         return None
-    
+
     if model is None:
         print("YOLO Classification model is None. Skipping.")
         return None
