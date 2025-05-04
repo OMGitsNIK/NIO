@@ -14,5 +14,5 @@ urlpatterns = [
     path("process_image", views.process_image, name="process_image"),
     path('events/', views.events, name='events'),
     path('report/<report_id>', views.report_detail_view, name='report_detail'),
-
+    path('report/snapshots/<snapshot_id>', views.report_snapshot_detail, name='report_detail')
 ]

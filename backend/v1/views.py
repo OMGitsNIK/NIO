@@ -8,7 +8,8 @@ from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 from icecream import ic
 from PIL import Image
-
+from django.core.files.base import ContentFile
+import uuid
 import cv2
 import numpy as np
 import json
@@ -19,6 +20,7 @@ import io
 import base64
 from skimage.filters import gaussian, sobel
 from skimage.restoration import denoise_wavelet
+from io import BytesIO
 
 import time
 from django.http import StreamingHttpResponse
@@ -32,13 +34,12 @@ def events(request):
                 client = sse_clients.pop(0)
                 logging.info(f"Sending data to client: {client}")
                 yield f"data: {json.dumps(client)}\n\n"
-            time.sleep(1)  # Prevent excessive CPU usage
+            time.sleep(1)
 
     return StreamingHttpResponse(event_stream(), content_type="text/event-stream")
 
 def alert_frontend(message: str, progress: int, type=''):
     sse_clients.append({"message": message, "progress": progress,"type":type})
-    print(f"Alerted Frontend: {message} ({progress}%)")
 
 @csrf_exempt
 def dataset_delete(request, dataset_id: int):
@@ -55,22 +56,20 @@ def dataset_delete(request, dataset_id: int):
     else:
         return JsonResponse({"error": "Invalid method"}, status=405)
 
-
-# def users
 @csrf_exempt
 def dataset(request,user_id):
     if request.method == "GET":
         user = get_object_or_404(models.User, id=user_id)
 
         datasets = models.DatasetBridge.objects.filter(
-            dataset__created_by=user  # 🚀 only datasets created by the user
+            dataset__created_by=user
         ).values(
             "dataset_id",
             "dataset__name",
             "dataset__description",
             "dataset__visibility",
             "dataset__created_by_id",
-            "dataset__created_by__name",  # typo fix here too
+            "dataset__created_by__name",
             "dataset__created_at",
         )
 
@@ -80,7 +79,7 @@ def dataset(request,user_id):
                 id__in=models.DatasetSnapshotBridge.objects.filter(
                     dataset_bridge__dataset_id=dataset["dataset_id"]
                 ).values_list("snapshot_id", flat=True),
-                created_by=user  # ✨ snapshots also filtered by user
+                created_by=user
             ).values(
                 "id", "media__file", "location", "created_on", "version", "media__id"
             )
@@ -93,7 +92,6 @@ def dataset(request,user_id):
             dataset_list.append(dataset)
 
         return JsonResponse(dataset_list, safe=False)
-
 
     if request.method == "POST":
         ic("in post")
@@ -126,28 +124,24 @@ def dataset(request,user_id):
             ic(e)
             return HttpResponseBadRequest(e)
 
-
 @csrf_exempt
 def dataset_id(request, id):
     if request.method == "GET":
         user_id = request.GET.get("user_id")
-        ic(user_id)  # Debugging: Check user_id
+        ic(user_id)
 
-        # Fetch the DatasetBridge instance using the dataset_id
         dataset_bridge = get_object_or_404(models.DatasetBridge, dataset_id=id)
-        dataset = dataset_bridge.dataset  # Access the related Dataset object
-        ic(dataset)  # Debugging: Check dataset
+        dataset = dataset_bridge.dataset
+        ic(dataset)
 
-        # Check if user has access to the dataset
         if user_id:
             bridge_user = models.DatasetUsersBridge.objects.filter(
                 dataset_bridge=dataset_bridge, user_id=user_id
             ).first()
-            ic(bridge_user)  # Debugging: Check bridge_user
+            ic(bridge_user)
             if not bridge_user:
                 return JsonResponse({"error": "Access Denied"}, status=403)
 
-        # Fetch snapshots related to the dataset
         snapshots = []
         for snapshot in models.DatasetSnapshotBridge.objects.filter(
             dataset_bridge=dataset_bridge
@@ -162,7 +156,6 @@ def dataset_id(request, id):
                 }
             )
 
-        # Fetch related reports for the dataset
         reports = models.Report.objects.filter(dataset=dataset)
         reports_data = [
             {
@@ -173,23 +166,21 @@ def dataset_id(request, id):
                     "id": report.user.id,
                     "name": report.user.name,
                 },
-                "results_count": report.results.count(),  # Number of snapshots in the report
+                "results_count": report.snapshots.count(),
             }
             for report in reports
         ]
 
-        # Return the dataset info along with related reports and snapshots
         return JsonResponse(
             {
                 "name": dataset.name,
                 "description": dataset.description,
                 "created_at": dataset.created_at,
                 "snapshots": snapshots,
-                "reports": reports_data,  # Include the reports in the response
+                "reports": reports_data,
             },
             safe=False,
         )
-
 
     if request.method == "POST":
         ic("in post")
@@ -218,7 +209,6 @@ def dataset_id(request, id):
             ic(e)
             return HttpResponseBadRequest(e)
 
-
 @csrf_exempt
 def snapshot(request):
     if request.method == "POST":
@@ -238,7 +228,6 @@ def snapshot(request):
             media = models.Bucket(file=file, name=name, created_by=user)
             media.save()
 
-            # Create the snapshot
             new_snapshot = models.Snapshot(
                 media=media, location=current_location, created_by=user, version=0
             )
@@ -269,7 +258,6 @@ def delete_snapshot(request, id):
                 logging.error(f"An error occurred while deleting the snapshot: {e}")
                 return JsonResponse({"status": "error", "message": "An error occurred while deleting the snapshot"}, status=500)
         return JsonResponse({"status": "error", "message": "Invalid request method"}, status=405)
-
 
 @csrf_exempt
 def bucket(request):
@@ -309,7 +297,6 @@ def bucket(request):
             {"status": "error", "message": "Invalid request method"}, status=405
         )
 
-
 def bucket_id(request, id):
     ic(id)
     bucket_file = get_object_or_404(models.Bucket, id=id)
@@ -336,11 +323,10 @@ def bucket_id(request, id):
                     if original_width > original_height
                     else (int(max_size * aspect_ratio), max_size)
                 )
-                # Resize the image
+
                 if bucket_file_actual_image.mode == "RGBA":
                     bucket_file_actual_image = bucket_file_actual_image.convert("RGB")
 
-                # Resize and save the image
                 resized_image = bucket_file_actual_image.resize(
                     (new_width, new_height), Image.Resampling.BICUBIC
                 )
@@ -367,10 +353,8 @@ def bucket_id(request, id):
         except FileNotFoundError:
             return HttpResponse("Image file not found", status=404)
 
-
 @csrf_exempt
 def process_image(request):
-    print("Started Request")
     if request.method != "POST":
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
@@ -387,7 +371,7 @@ def process_image(request):
             "generated_images": {},
         }
         ic(response)
-        step_paths = []  # Store paths to images and captions for the PDF
+        step_paths = []
 
         time.sleep(1)
         alert_frontend("Denoising image...", 20)
@@ -416,7 +400,6 @@ def process_image(request):
         step_paths.append(("Inpainted Image", inpainted_path))
 
         ic(inpainted, inpainted_path)
-        # Additional filtering using skimage
 
         gaussian_filtered = gaussian(inpainted, sigma=1)
         gaussian_filtered_path = "temp_gaussian_filtered.jpg"
@@ -444,13 +427,6 @@ def process_image(request):
 
         ic(laplace, thresh, thresh_path)
 
-        # response["feature_extraction"].update(
-        #     {
-        #         "blur_score": float(laplace),
-        #         "otsu_threshold": float(thresh.mean()),
-        #     }
-        # )
-
         alert_frontend("Generating report...", 80)
         time.sleep(1)
 
@@ -468,21 +444,6 @@ def process_image(request):
         return JsonResponse({"error": "An error occurred"}, status=500)
 
 
-
-
-def inpaint_image(bilateral, img):
-    mask = np.zeros(img.shape[:2], dtype=np.uint8)
-    if np.any(mask):
-        inpainted = inpaint.inpaint_biharmonic(bilateral, mask)
-    else:
-        inpainted = bilateral
-    inpainted_path = "temp_inpainted.jpg"
-    cv2.imwrite(inpainted_path, inpainted)
-    return inpainted, inpainted_path
-
-
-
-
 @csrf_exempt
 def AnalyzeDataset(request):
     if request.method == "POST":
@@ -494,18 +455,15 @@ def AnalyzeDataset(request):
             if not dataset_id or not user_id:
                 return JsonResponse({"error": "dataset_id and user_id are required"}, status=400)
 
-            # Fetch the dataset and user objects
             dataset = models.Dataset.objects.get(id=dataset_id)
             user = models.User.objects.get(id=user_id)
 
-            # Create a new report with a 'pending' status
             report = models.Report.objects.create(
                 dataset=dataset,
                 user=user,
                 status="pending"
             )
 
-            # Start the background analysis task
             threading.Thread(target=analyze_dataset_background, args=(dataset_id, user_id, report.id)).start()
 
             return JsonResponse({"status": "processing_started", "report_id": report.id}, status=202)
@@ -518,61 +476,85 @@ def AnalyzeDataset(request):
     else:
         return JsonResponse({"error": "Method not allowed"}, status=405)
 
-
-
-
 def report_detail_view(request, report_id):
-    """
-    View to get the details of a specific report.
-
-    Args:
-        request: The HTTP request object.
-        report_id (uuid): The UUID of the report to retrieve.
-
-    Returns:
-        JsonResponse: A JSON response containing the report details or an error message.
-    """
-    # Use get_object_or_404 to retrieve the report or return a 404 error
     report = get_object_or_404(models.Report, id=report_id)
 
-    # Prepare the data to be returned in the JSON response
     report_data = {
         'id': report.id,
-        'dataset_name': report.dataset.name, # Accessing related Dataset name
-        'user_name': report.user.name,       # Accessing related User name
-        'report_file_url': request.build_absolute_uri(report.report_file.url) if report.report_file else None, # Get absolute URL for the file
-        'created_at': report.created_at.isoformat(), # Format datetime as ISO string
+        'dataset_name': report.dataset.name,
+        'user_name': report.user.name,
+        'report_file_url': request.build_absolute_uri(report.report_file.url) if report.report_file else None,
+        'created_at': report.created_at.isoformat(),
         'status': report.status,
-        'snapshots': [], # List to hold details of associated snapshots
+        'snapshots': [],
+        'total_segmented_objects': 0,
+        'object_counts': {},  # For segmentation snapshots
+        'classification_counts': {},  # For classification snapshots
     }
 
-    # Add details for associated snapshots
-    for snapshot in report.results.all():
+    for report_snapshot in report.snapshots.all():
+        snapshot = report_snapshot.snapshot
         snapshot_data = {
             'id': snapshot.id,
-            'media_name': snapshot.media.name, # Accessing related Bucket name
-            'location_title': snapshot.location.title, # Accessing related Location title
-            'created_on': snapshot.created_on.isoformat(), # Format datetime as ISO string
+            'media_name': snapshot.media.name,
+            'location_title': snapshot.location.title,
+            'created_on': snapshot.created_on.isoformat(),
             'version': snapshot.version,
-            'created_by_name': snapshot.created_by.name, # Accessing related User name
-            'src':'/v1/bucket/'+str(snapshot.media.id)
+            'created_by_name': snapshot.created_by.name,
+            'src': '/v1/bucket/' + str(snapshot.media.id),
         }
+
+        # Check if the snapshot is a segmentation snapshot
+        if report_snapshot.metadata and report_snapshot.metadata.get('type') == 'seg':
+            # Extract segmentation results from metadata
+            class_counts = report_snapshot.metadata.get('segment_output', {})
+            # Calculate total objects for this snapshot and add to global count
+            snapshot_objects = sum(class_counts.values()) if class_counts else 0
+            report_data['total_segmented_objects'] += snapshot_objects
+            # Aggregate segmentation object counts
+            for obj_type, count in class_counts.items():
+                report_data['object_counts'][obj_type] = report_data['object_counts'].get(obj_type, 0) + count
+
+        # Check if the snapshot is a classification snapshot
+        elif report_snapshot.metadata and report_snapshot.metadata.get('type') == 'cls':
+            # Extract classification result (single class name)
+            class_name = report_snapshot.metadata.get('result')
+            if class_name and isinstance(class_name, str):
+                # Increment count for this class name
+                report_data['classification_counts'][class_name] = report_data['classification_counts'].get(class_name, 0) + 1
+
         report_data['snapshots'].append(snapshot_data)
 
-    # Return the data as a JSON response
     return JsonResponse(report_data)
 
 
-def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
-    from django.core.files.base import ContentFile
-    import uuid
-    import cv2
-    ic(img_arr)
-    success, buffer = cv2.imencode('.jpg', (img_arr * 255).astype(np.uint8))
-    if not success:
-        raise Exception("Failed to encode image.")
 
-    image_file = ContentFile(buffer.tobytes(), name=f"{uuid.uuid4()}.jpg")
+def report_snapshot_detail(request, snapshot_id):
+    report_snapshot = get_object_or_404(models.ReportSnapshot, snapshot__id=snapshot_id)
+    snapshot = report_snapshot.snapshot
+
+    snapshot_data = {
+        'id': snapshot.id,
+        'media_name': snapshot.media.name,
+        'location_title': snapshot.location.title,
+        'created_on': snapshot.created_on.isoformat(),
+        'version': snapshot.version,
+        'created_by_name': snapshot.created_by.name,
+        'src': '/v1/bucket/' + str(snapshot.media.id),
+        'metadata': report_snapshot.metadata  # Include metadata from ReportSnapshot
+    }
+
+    return JsonResponse(snapshot_data)
+
+
+def save_snapshot_to_report(img_arr, report, user,metadata={},name=None) :
+    cv2.imwrite('buffer1.jpg', img_arr)
+    img = Image.fromarray(img_arr)
+
+    buffer = BytesIO()
+    img.save(buffer, format="JPEG")
+    img.save('buffer.jpg', format="JPEG")
+    image_file = ContentFile(buffer.getvalue(), name=f"{uuid.uuid4()}.jpg")
 
     bucket = models.Bucket.objects.create(
         file=image_file,
@@ -582,65 +564,51 @@ def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
 
     snapshot = models.Snapshot.objects.create(
         media=bucket,
-        location=models.Location.objects.create(),  # or pass location if you have
+        location=models.Location.objects.create(),
         created_by=user
     )
 
-    report.results.add(snapshot)
+    report_snapshot = models.ReportSnapshot.objects.create(report=report, snapshot=snapshot,metadata=metadata)
+    return (bucket,snapshot,report_snapshot)
 
-
-def analyze_image(media_file, report_id) -> dict:
+def analyze_image(media_file, report_id,snapshot) -> dict:
     try:
         ic(media_file.name)
 
         img = convert_image_to_opencv(media_file)
-
-
         report = models.Report.objects.get(id=report_id)
         user = report.user
+        og=save_snapshot_to_report(img, report, user,{"name":"original","rel":{'src':'/v1/bucket/' + str(snapshot.media.id)},'type':'image'},"og")
 
         denoised= denoise_image(img)
-        save_snapshot_to_report(denoised, report, user)
+        den=save_snapshot_to_report(denoised, report, user,{"name":"denoised","rel":{'src':'/v1/bucket/' + str(snapshot.media.id)},'type':'image'},"denoised")
 
-        deconvolved= deconvolve_image(denoised)
-        save_snapshot_to_report(deconvolved, report, user)
+        # deconvolved= deconvolve_image(denoised)
+        # dec=save_snapshot_to_report(deconvolved, report, user,{"name":"deconvolved","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'image'},"deconvolved")
 
-        bilateral= apply_bilateral_filter(deconvolved)
-        save_snapshot_to_report(bilateral, report, user)
+        # bilateral= apply_bilateral_filter(deconvolved)
+        # save_snapshot_to_report(bilateral, report, user,'inpainted')
 
-        inpainted= bilateral
-        save_snapshot_to_report(inpainted, report, user)
+        # inpainted= bilateral
+        # save_snapshot_to_report(inpainted, report, user,'inpainted')
 
-        # gaussian_filtered = gaussian(inpainted, sigma=1)
-        # save_snapshot_to_report(gaussian_filtered, report, user)
+        # wavelet_denoised = denoise_image(inpainted)
+        # save_snapshot_to_report(wavelet_denoised, report, user,'wavelet')
 
-        # sobel_filtered = sobel(cv2.cvtColor(inpainted, cv2.COLOR_BGR2GRAY))
-        # save_snapshot_to_report(sobel_filtered, report, user)
+        seg_model = load_yolo_segmentation_model('yolo_models/best_seg.pt')
+        cls_model = load_yolo_classification_model('yolo_models/best_cls.pt')
 
-        wavelet_denoised = denoise_image(inpainted)
-        save_snapshot_to_report(wavelet_denoised, report, user)
-
-        # _, _, thresh = extract_features(inpainted)
-        # save_snapshot_to_report(thresh, report, user)
-        
-        seg_model = load_yolo_segmentation_model('public/best_seg.pt') # Uses default yolov8n-seg.pt
-        cls_model = load_yolo_classification_model('public/best_cls.pt') # Uses default yolov8n-cls.pt
-        # ic(seg_model)
-        # ic(cls_model)
-        # 4. Run segmentation if the model loaded successfully
         if seg_model:
-            print("\nRunning YOLO Segmentation...")
-            segmentation_results = run_yolo_segmentation(wavelet_denoised, seg_model)
+            ic("Running YOLO Segmentation...")
+            segmentation_results = run_yolo_segmentation(denoised, seg_model)
             if segmentation_results:
-                segmentation_image, segmentation_summary = segmentation_results
+                segmentation_image, segmentation_summary,segments = segmentation_results
                 ic("YOLO Segmentation Results:")
                 ic(segmentation_image)
 
-                # --- Add save snapshot call after successful segmentation ---
                 ic("Saving segmentation snapshot to report...")
                 try:
-                    # Assuming segmentation_image is the required 'res_img_cv2_format'
-                    save_snapshot_to_report(segmentation_image[0], report, user)
+                    save_snapshot_to_report(segmentation_image, report, user,{"name":"Segmentation","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'seg','result':segmentation_summary,'segment_output':segments},'segment')
                     ic("Segmentation snapshot saved successfully.")
                 except Exception as e:
                     ic(f"Failed to save segmentation snapshot to report: {e}")
@@ -648,26 +616,23 @@ def analyze_image(media_file, report_id) -> dict:
             else:
                 ic("YOLO Segmentation failed or did not return results.")
 
-
         if cls_model:
-            print("\nRunning YOLO Classification...")
-            classification_results = run_yolo_classification(wavelet_denoised, cls_model)
+            ic("Running YOLO Classification...")
+            classification_results = run_yolo_classification(denoised, cls_model)
             ic(classification_results)
             if classification_results:
-                classification_image, classification_summary = classification_results
-                print("YOLO Classification Results:")
-                print(classification_summary)
-                print("Saving classification snapshot to report...")
+                classification_image, classification_summary,classified_name = classification_results
+                ic("YOLO Classification Results:")
+                ic(classification_summary)
+                ic("Saving classification snapshot to report...")
                 try:
-                    save_snapshot_to_report(classification_image[0], report, user)
-                    print("Classification snapshot saved successfully.")
+                    save_snapshot_to_report(classification_image, report, user,{"name":"Classification","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'cls','result':classified_name},'Classify')
+                    ic("Classification snapshot saved successfully.")
                 except Exception as e:
-                    print(f"Failed to save classification snapshot to report: {e}")
+                    ic(f"Failed to save classification snapshot to report: {e}")
 
         else:
-            print("YOLO Classification failed or did not return results.")
-
-
+            ic("YOLO Classification failed or did not return results.")
 
         report.status = "completed"
         report.save()
@@ -683,9 +648,6 @@ def analyze_image(media_file, report_id) -> dict:
             "details": str(e),
         }
 
-
-
-
 def analyze_dataset_background(dataset_id, user_id, report_id):
     alert_frontend("Analysis Started, Refreshing", progress=0,type="REFRESH")
 
@@ -693,10 +655,8 @@ def analyze_dataset_background(dataset_id, user_id, report_id):
         dataset_bridge = models.DatasetBridge.objects.get(dataset_id=dataset_id)
         user = models.User.objects.get(id=user_id)
 
-        # Fetch the report or create a new one if not found
         report = models.Report.objects.get(id=report_id)
 
-        # Ensure the report belongs to the same dataset and user
         if report.dataset != dataset_bridge.dataset or report.user.id != user.id:
             raise ValueError("Report does not belong to this dataset or user")
 
@@ -711,32 +671,21 @@ def analyze_dataset_background(dataset_id, user_id, report_id):
             snapshot = ds_bridge.snapshot
             media_file = snapshot.media.file
 
-            # Assuming analyze_image() has some stages or steps you can break down
             alert_frontend(f"Starting analysis of image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
 
-            # Perform image analysis
-            result = analyze_image(media_file,report_id)
+            result = analyze_image(media_file,report_id,snapshot)
             processed_snapshots += 1
 
-            # Associate the result (snapshot) with the report
-            report.results.add(snapshot)  # Add the snapshot to the report's results
-
-            # Update progress after analysis step
             alert_frontend(f"Analyzing image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
 
-            # Complete progress after finishing all images
             if processed_snapshots == total_snapshots:
                 alert_frontend("Completed analysis for all images in dataset.", progress=100)
 
-            # Do whatever you want with the result (save it? log it? update DB?)
-            print(f"Snapshot {snapshot.id} analysis result: {result}")
-
-        # Once all images are analyzed, mark the report as completed
         report.status = 'completed'
         report.save()
 
     except Exception as e:
         logging.error(f"Background dataset analysis failed: {e}")
-        if 'report' in locals():  # If the report was created, mark it as failed
+        if 'report' in locals():
             report.status = 'failed'
             report.save()
