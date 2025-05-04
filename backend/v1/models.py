@@ -170,6 +170,12 @@ class Report(models.Model):
         choices=[("pending", "Pending"), ("completed", "Completed"), ("failed", "Failed")],
         default="pending"
     )
-    results = models.ManyToManyField(Snapshot, related_name="reports")  # Results of the report (snapshots)
+    # results = models.ManyToManyField(Snapshot, related_name="reports")  # Results of the report (snapshots)
     def __str__(self):
         return f"Report for Dataset {self.dataset.name} by {self.user.name}"
+
+
+class ReportSnapshot(models.Model):
+    report = models.ForeignKey(Report, on_delete=models.CASCADE, related_name="snapshots")
+    snapshot = models.ForeignKey(Snapshot, on_delete=models.CASCADE)
+    metadata = models.JSONField(default=dict)

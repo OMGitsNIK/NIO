@@ -166,7 +166,7 @@ def dataset_id(request, id):
                     "id": report.user.id,
                     "name": report.user.name,
                 },
-                "results_count": report.results.count(),
+                "results_count": report.snapshots.count(),
             }
             for report in reports
         ]
@@ -443,15 +443,6 @@ def process_image(request):
         logging.error(f"An error occurred: {e}")
         return JsonResponse({"error": "An error occurred"}, status=500)
 
-def inpaint_image(bilateral, img):
-    mask = np.zeros(img.shape[:2], dtype=np.uint8)
-    if np.any(mask):
-        inpainted = inpaint.inpaint_biharmonic(bilateral, mask)
-    else:
-        inpainted = bilateral
-    inpainted_path = "temp_inpainted.jpg"
-    cv2.imwrite(inpainted_path, inpainted)
-    return inpainted, inpainted_path
 
 @csrf_exempt
 def AnalyzeDataset(request):
@@ -496,9 +487,13 @@ def report_detail_view(request, report_id):
         'created_at': report.created_at.isoformat(),
         'status': report.status,
         'snapshots': [],
+        'total_segmented_objects': 0,
+        'object_counts': {},  # For segmentation snapshots
+        'classification_counts': {},  # For classification snapshots
     }
 
-    for snapshot in report.results.all():
+    for report_snapshot in report.snapshots.all():
+        snapshot = report_snapshot.snapshot
         snapshot_data = {
             'id': snapshot.id,
             'media_name': snapshot.media.name,
@@ -506,13 +501,53 @@ def report_detail_view(request, report_id):
             'created_on': snapshot.created_on.isoformat(),
             'version': snapshot.version,
             'created_by_name': snapshot.created_by.name,
-            'src':'/v1/bucket/'+str(snapshot.media.id)
+            'src': '/v1/bucket/' + str(snapshot.media.id),
         }
+
+        # Check if the snapshot is a segmentation snapshot
+        if report_snapshot.metadata and report_snapshot.metadata.get('type') == 'seg':
+            # Extract segmentation results from metadata
+            class_counts = report_snapshot.metadata.get('segment_output', {})
+            # Calculate total objects for this snapshot and add to global count
+            snapshot_objects = sum(class_counts.values()) if class_counts else 0
+            report_data['total_segmented_objects'] += snapshot_objects
+            # Aggregate segmentation object counts
+            for obj_type, count in class_counts.items():
+                report_data['object_counts'][obj_type] = report_data['object_counts'].get(obj_type, 0) + count
+
+        # Check if the snapshot is a classification snapshot
+        elif report_snapshot.metadata and report_snapshot.metadata.get('type') == 'cls':
+            # Extract classification result (single class name)
+            class_name = report_snapshot.metadata.get('result')
+            if class_name and isinstance(class_name, str):
+                # Increment count for this class name
+                report_data['classification_counts'][class_name] = report_data['classification_counts'].get(class_name, 0) + 1
+
         report_data['snapshots'].append(snapshot_data)
 
     return JsonResponse(report_data)
 
-def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
+
+
+def report_snapshot_detail(request, snapshot_id):
+    report_snapshot = get_object_or_404(models.ReportSnapshot, snapshot__id=snapshot_id)
+    snapshot = report_snapshot.snapshot
+
+    snapshot_data = {
+        'id': snapshot.id,
+        'media_name': snapshot.media.name,
+        'location_title': snapshot.location.title,
+        'created_on': snapshot.created_on.isoformat(),
+        'version': snapshot.version,
+        'created_by_name': snapshot.created_by.name,
+        'src': '/v1/bucket/' + str(snapshot.media.id),
+        'metadata': report_snapshot.metadata  # Include metadata from ReportSnapshot
+    }
+
+    return JsonResponse(snapshot_data)
+
+
+def save_snapshot_to_report(img_arr, report, user,metadata={},name=None) :
     cv2.imwrite('buffer1.jpg', img_arr)
     img = Image.fromarray(img_arr)
 
@@ -533,23 +568,23 @@ def save_snapshot_to_report(img_arr, report, user, name=None) -> None:
         created_by=user
     )
 
-    report.results.add(snapshot)
+    report_snapshot = models.ReportSnapshot.objects.create(report=report, snapshot=snapshot,metadata=metadata)
+    return (bucket,snapshot,report_snapshot)
 
-
-def analyze_image(media_file, report_id) -> dict:
+def analyze_image(media_file, report_id,snapshot) -> dict:
     try:
         ic(media_file.name)
 
         img = convert_image_to_opencv(media_file)
         report = models.Report.objects.get(id=report_id)
         user = report.user
-        save_snapshot_to_report(img, report, user,'og')
+        og=save_snapshot_to_report(img, report, user,{"name":"original","rel":{'src':'/v1/bucket/' + str(snapshot.media.id)},'type':'image'},"og")
 
         denoised= denoise_image(img)
-        save_snapshot_to_report(denoised, report, user,'denoised')
+        den=save_snapshot_to_report(denoised, report, user,{"name":"denoised","rel":{'src':'/v1/bucket/' + str(snapshot.media.id)},'type':'image'},"denoised")
 
         # deconvolved= deconvolve_image(denoised)
-        # save_snapshot_to_report(deconvolved, report, user,'deconvolved')
+        # dec=save_snapshot_to_report(deconvolved, report, user,{"name":"deconvolved","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'image'},"deconvolved")
 
         # bilateral= apply_bilateral_filter(deconvolved)
         # save_snapshot_to_report(bilateral, report, user,'inpainted')
@@ -560,44 +595,44 @@ def analyze_image(media_file, report_id) -> dict:
         # wavelet_denoised = denoise_image(inpainted)
         # save_snapshot_to_report(wavelet_denoised, report, user,'wavelet')
 
-        # seg_model = load_yolo_segmentation_model('public/best_seg.pt')
-        # cls_model = load_yolo_classification_model('public/best_cls.pt')
+        seg_model = load_yolo_segmentation_model('yolo_models/best_seg.pt')
+        cls_model = load_yolo_classification_model('yolo_models/best_cls.pt')
 
-        # if seg_model:
-        #     ic("Running YOLO Segmentation...")
-        #     segmentation_results = run_yolo_segmentation(wavelet_denoised, seg_model)
-        #     if segmentation_results:
-        #         segmentation_image, segmentation_summary = segmentation_results
-        #         ic("YOLO Segmentation Results:")
-        #         ic(segmentation_image)
+        if seg_model:
+            ic("Running YOLO Segmentation...")
+            segmentation_results = run_yolo_segmentation(denoised, seg_model)
+            if segmentation_results:
+                segmentation_image, segmentation_summary,segments = segmentation_results
+                ic("YOLO Segmentation Results:")
+                ic(segmentation_image)
 
-        #         ic("Saving segmentation snapshot to report...")
-        #         try:
-        #             save_snapshot_to_report(segmentation_image[0], report, user,'segment')
-        #             ic("Segmentation snapshot saved successfully.")
-        #         except Exception as e:
-        #             ic(f"Failed to save segmentation snapshot to report: {e}")
+                ic("Saving segmentation snapshot to report...")
+                try:
+                    save_snapshot_to_report(segmentation_image, report, user,{"name":"Segmentation","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'seg','result':segmentation_summary,'segment_output':segments},'segment')
+                    ic("Segmentation snapshot saved successfully.")
+                except Exception as e:
+                    ic(f"Failed to save segmentation snapshot to report: {e}")
 
-        #     else:
-        #         ic("YOLO Segmentation failed or did not return results.")
+            else:
+                ic("YOLO Segmentation failed or did not return results.")
 
-        # if cls_model:
-        #     ic("Running YOLO Classification...")
-        #     classification_results = run_yolo_classification(wavelet_denoised, cls_model)
-        #     ic(classification_results)
-        #     if classification_results:
-        #         classification_image, classification_summary = classification_results
-        #         ic("YOLO Classification Results:")
-        #         ic(classification_summary)
-        #         ic("Saving classification snapshot to report...")
-        #         try:
-        #             save_snapshot_to_report(classification_image[0], report, user,'clsasify')
-        #             ic("Classification snapshot saved successfully.")
-        #         except Exception as e:
-        #             ic(f"Failed to save classification snapshot to report: {e}")
+        if cls_model:
+            ic("Running YOLO Classification...")
+            classification_results = run_yolo_classification(denoised, cls_model)
+            ic(classification_results)
+            if classification_results:
+                classification_image, classification_summary,classified_name = classification_results
+                ic("YOLO Classification Results:")
+                ic(classification_summary)
+                ic("Saving classification snapshot to report...")
+                try:
+                    save_snapshot_to_report(classification_image, report, user,{"name":"Classification","rel":{'src':'/v1/bucket/' + str(den[1].media.id)},'type':'cls','result':classified_name},'Classify')
+                    ic("Classification snapshot saved successfully.")
+                except Exception as e:
+                    ic(f"Failed to save classification snapshot to report: {e}")
 
-        # else:
-        #     ic("YOLO Classification failed or did not return results.")
+        else:
+            ic("YOLO Classification failed or did not return results.")
 
         report.status = "completed"
         report.save()
@@ -638,10 +673,8 @@ def analyze_dataset_background(dataset_id, user_id, report_id):
 
             alert_frontend(f"Starting analysis of image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
 
-            result = analyze_image(media_file,report_id)
+            result = analyze_image(media_file,report_id,snapshot)
             processed_snapshots += 1
-
-            # report.results.add(snapshot)
 
             alert_frontend(f"Analyzing image: {media_file.name}", progress=int(processed_snapshots / total_snapshots * 100))
 

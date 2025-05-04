@@ -19,7 +19,7 @@ def convert_image_to_opencv(image):
     if img is None:
         return None
     img_rgb=cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-                 turn img_rgb
+    return img_rgb
 
 
 def convert_bytes_to_opencv_image(image_bytes: bytes) -> Optional[np.ndarray]:
@@ -60,13 +60,14 @@ def denoise_image(img_arr: np.ndarray) -> Optional[np.ndarray]:
 
 def deconvolve_image(img_arr: np.ndarray) -> Optional[np.ndarray]:
     """Applies deconvolution (deblurring) using Unsupervised Wiener filter on L channel."""
-    if img_arr is None: return None
+    if img_arr is None:
+        return None
     try:
         img_float = img_as_float(img_arr)
         lab_img = rgb2lab(img_float)
         L_channel = lab_img[:, :, 0]
-        psf = np.ones((5, 5)) / 25
-        deconvolved_L, _ = unsupervised_wiener(L_channel, psf, iterations=5, is_blind=True)
+        psf = np.ones((5, 5)) / 25  # Point Spread Function (PSF)
+        deconvolved_L, _ = unsupervised_wiener(L_channel, psf)
         deconvolved_L = np.clip(deconvolved_L, 0, 100)
         lab_img[:, :, 0] = deconvolved_L
         rgb_deconvolved_float = lab2rgb(lab_img)
@@ -220,7 +221,11 @@ def find_similar_images(
     sorted_results = sorted(results, key=lambda x: -x["score"])
     return sorted_results[:5]
 
-def run_yolo_segmentation(img_arr, model: Any, save_path: str = None):
+
+
+def run_yolo_segmentation(
+    img_arr: np.ndarray, model: Any, save_path: Optional[str] = None
+):
     """
     Runs YOLO Segmentation, draws results on the image, saves the image to the specified path,
     and returns the image along with a summary of detected objects (count and names).
@@ -232,17 +237,24 @@ def run_yolo_segmentation(img_arr, model: Any, save_path: str = None):
 
     Returns:
         A tuple containing:
-        - The image (np.ndarray) with segmentation masks and bounding boxes drawn.
-        - A string summary of the detected objects (count and names).
+        - The image (np.ndarray) with segmentation masks and bounding boxes drawn, or None on error.
+        - A string summary of the detected objects (count and names), or None on error.
+        - A dictionary with class names and their counts (e.g., {"person": 2, "car": 1}), or None on error.
     """
-    # Ensure img_arr is a NumPy array
+    # Validate input image
     if not isinstance(img_arr, np.ndarray):
-        print("Input image is not a valid NumPy array.")
-        return None
+        print("Error: Input image is not a valid NumPy array.")
+        return None, None, None
 
+    # Validate model
     if model is None:
-        print("YOLO Segmentation model is None. Skipping.")
-        return None
+        print("Error: YOLO Segmentation model is None.")
+        return None, None, None
+
+    # Validate save_path if provided
+    if save_path and not isinstance(save_path, str):
+        print("Error: save_path must be a string.")
+        return None, None, None
 
     try:
         # Run inference
@@ -250,67 +262,58 @@ def run_yolo_segmentation(img_arr, model: Any, save_path: str = None):
 
         # Get image with results drawn
         if hasattr(results, 'plot') and callable(results.plot):
-            results_img = results.plot()  # This draws masks, boxes, labels
+            results_img = results.plot()  # Draws masks, boxes, labels
         else:
-            print("YOLO results object lacks .plot() method. Returning original image.")
-            results_img = img_arr  # Return original image if plotting not possible
+            print("Warning: YOLO results object lacks .plot() method. Returning original image.")
+            results_img = img_arr.copy()  # Return a copy to avoid modifying the input
 
-        # Optionally save the image
+        # Save the image if save_path is provided
         if save_path:
-            cv2.imwrite(save_path, results_img)
-            print(f"Results saved to {save_path}")
+            try:
+                cv2.imwrite(save_path, results_img)
+                print(f"Results saved to {save_path}")
+            except Exception as e:
+                print(f"Error saving image to {save_path}: {e}")
 
-        # Process results for text summary (count and what's found)
+        # Initialize summary and counts
         summary_text = "No objects detected."
+        class_counts = {}
+
+        # Process detection results
         if hasattr(results, 'boxes') and results.boxes is not None:
             detections = results.boxes
             count = len(detections)
-            if count > 0:
-                # Get class names for detected objects
-                if hasattr(results, 'names') and hasattr(detections, 'cls'):
-                    detected_classes = [
-                        results.names[int(cls_id)]
-                        for cls_id in detections.cls
-                        if int(cls_id) < len(results.names)  # Basic check
-                    ]
-                    # Create a summary string, potentially counting occurrences
-                    class_counts = {}
-                    for cls_name in detected_classes:
-                        class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+            if count > 0 and hasattr(results, 'names') and hasattr(detections, 'cls'):
+                # Collect detected class names
+                detected_classes = [
+                    results.names[int(cls_id)]
+                    for cls_id in detections.cls
+                    if int(cls_id) < len(results.names)
+                ]
+                # Count occurrences of each class
+                class_counts = {}
+                for cls_name in detected_classes:
+                    class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
 
-                    summary_items = [
-                        f"{count} {name}" if count == 1 else f"{count} {name}s"
-                        for name, count in class_counts.items()
-                    ]
-                    summary_text = f"Found {count} object(s): " + ", ".join(summary_items)
-                else:
-                    summary_text = f"Found {count} object(s). Class names not available."
+                # Create summary string
+                summary_items = [
+                    f"{count} {name}" if count == 1 else f"{count} {name}s"
+                    for name, count in class_counts.items()
+                ]
+                summary_text = f"Found {count} object(s): " + ", ".join(summary_items)
             else:
-                summary_text = "Found 0 objects."
+                summary_text = f"Found {count} object(s). Class names not available."
         else:
             summary_text = "No detection boxes found in results."
 
-        return results_img, summary_text
+        return results_img, summary_text, class_counts
 
     except Exception as e:
-        print(f"YOLO Segmentation failed: {e}")
-        return img_arr, f"Error during segmentation: {e}"  # Return original image and error message
-def run_yolo_classification(img_arr, model, save_path: str = None):
-    """
-    Runs YOLO Classification, draws results on the image (if possible), saves the image to the specified path,
-    and returns the image along with the top classification result.
+        print(f"Error during YOLO segmentation: {e}")
+        return None, None, None
 
-    Args:
-        img_arr: Input image as a NumPy array.
-        model: Loaded YOLO Classification model.
-        save_path: Optional path to save the output image.
 
-    Returns:
-        A tuple containing:
-        - The image (np.ndarray) potentially with classification results drawn.
-        - A string summary of the top classification result (class name and confidence).
-    """
-    # Ensure img_arr is a NumPy array
+def run_yolo_classification(img_arr, model):
     if not isinstance(img_arr, np.ndarray):
         print("Input image is not a valid NumPy array.")
         return None
@@ -320,22 +323,13 @@ def run_yolo_classification(img_arr, model, save_path: str = None):
         return None
 
     try:
-        # Run inference
         results = model(img_arr)[0]  # Assuming batch size 1
-
-        # Get image with results drawn (classification plot might just add text)
         if hasattr(results, 'plot') and callable(results.plot):
             results_img = results.plot()  # Assuming it returns the plotted image array
         else:
             print("YOLO results object lacks .plot() method. Returning original image.")
             results_img = img_arr  # Return original image if plotting not possible
-
-        # Optionally save the image
-        if save_path:
-            results.save(save_path)
-            print(f"Results saved to {save_path}")
-
-        # Process results for text summary (top class and confidence)
+        cls_obj=''
         summary_text = "Classification failed or no prediction."
         if hasattr(results, 'probs') and results.probs is not None:
             probs = results.probs
@@ -345,6 +339,8 @@ def run_yolo_classification(img_arr, model, save_path: str = None):
                 # Ensure index is within bounds of class names
                 if top_prob_idx is not None and top_confidence is not None and int(top_prob_idx) < len(results.names):
                     top_class_name = results.names[int(top_prob_idx)]
+                    cls_obj=top_class_name
+
                     summary_text = f"Top prediction: {top_class_name} ({top_confidence:.2f})"
                 else:
                     summary_text = "Could not get top prediction details from results."
@@ -353,7 +349,7 @@ def run_yolo_classification(img_arr, model, save_path: str = None):
         else:
             summary_text = "No classification probabilities found in results."
 
-        return results_img, summary_text
+        return results_img, summary_text,cls_obj
 
     except Exception as e:
         print(f"YOLO Classification failed: {e}")

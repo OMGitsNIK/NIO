@@ -574,7 +574,7 @@ export default function DatasetPage() {
 
   const maxSizeMB = 100;
   const maxSize = maxSizeMB * 1024 * 1024;
-  const maxFiles = 10;
+  const maxFiles = 500;
 
   const [{ files, isDragging, errors: validationErrors }, fileUploadHandlers] =
     useFileUpload({
