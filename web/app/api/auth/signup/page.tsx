@@ -1,36 +1,38 @@
-'use client'
-import { useState } from "react";
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import axiosInstance from "@/lib/axios";
 import { Button } from "@/components/ui/button";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SignUpPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const session = useSession();
   const handleCreateAccount = async () => {
     try {
       const response = await axiosInstance.post("/api/register/", {
-							email,
-							password,
-						});
-						console.log(response.data);
-  await signIn("credentials", {
-      redirect: false,
-      email,
-      password,
-    })      
+        email,
+        password,
+      });
+      console.log(response.data);
+      await signIn("credentials", {
+        redirect: true,
+        email,
+        password,
+      });
     } catch (error) {
       console.error(error);
     }
   };
-
-
-
-
-
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      router.push("/");
+    }
+  }, [session, router]);
   return (
     <div className="flex min-h-screen">
       <div className="flex w-full lg:w-1/2 flex-col items-center justify-center px-6 py-12 bg-white text-black">
@@ -51,19 +53,6 @@ export default function SignUpPage() {
 
           <div className="mt-8 space-y-6">
             <div className="space-y-4">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium">
-                  Name
-                </label>
-                <input
-                  id="name"
-                  name="name"
-                  type="text"
-                  required
-                  className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:outline-none focus:ring-blue-500"
-                />
-              </div>
-
               <div>
                 <label htmlFor="email" className="block text-sm font-medium">
                   Email

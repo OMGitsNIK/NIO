@@ -4,6 +4,7 @@
 
 @theme {
     --font-poppins: "Poppins", sans-serif;
+    --font-space: "Space Mono", monospace;
 }
 
 @custom-variant dark (&:is(.dark *));
