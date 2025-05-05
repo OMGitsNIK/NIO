@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "v1",
     "corsheaders",
+    "django_extensions",
 ]
 
 MIDDLEWARE = [
@@ -51,6 +52,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "app.middleware.ActiveUsersMiddleware",
 ]
 
 ROOT_URLCONF = "app.urls"
@@ -82,6 +84,21 @@ HqmpRhDneFrPSH0gujLjlG/UK0EnT7c4DxiE7o/m30M6fbUkVZ28HdoHsYqYbwoF
 BYjJqKquuGa8eqUTcRoypbm2qnGy3Ot0rGgEgTBAPTf+5+pmSYsEhC9wTla4DXvl
 0DWrUddsdagvl40"""
 BCRYPT_SALT = bcrypt.gensalt()
+
+LOGGING = {
+    "version": 1,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django.server": {
+            "handlers": ["console"],
+            "level": "INFO",
+        },
+    },
+}
 
 DATABASES = {
     "default": {
